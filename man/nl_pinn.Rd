@@ -1,0 +1,29 @@
+\name{nl_pinn}
+\alias{nl_pinn}
+\title{Fit a physics-informed neural network (PINN)}
+\description{Provides PINN workflows for a discretized one-dimensional Richards soil-water equation and for simple ODE growth templates. The Richards mode uses soil-depth states and can combine physical residuals with observed water contents through NeuralPDE's ODE-specialized PINN algorithm.}
+\usage{nl_pinn(data,problem=c("richards_1d","logistic_growth","first_order_nutrient"),time,response,depth=NULL, covariates=character(),parameters=numeric(),estimate_parameters=FALSE,hidden=c(24,24),maxiters=1500, strategy=c("weighted_interval","grid"),collocation_points=500,seed=20260817,julia=NULL,output_dir=NULL,dry_run=FALSE)}
+\arguments{
+  \item{data}{Data frame.}
+  \item{problem}{`richards_1d`, `logistic_growth`, or `first_order_nutrient`.}
+  \item{time}{Time column.}
+  \item{response}{Response/state column for one-state problems; water-content column for Richards mode.}
+  \item{depth}{Depth column for `richards_1d`.}
+  \item{covariates}{Optional numeric covariates.}
+  \item{parameters}{Named physical parameters. Richards expects `theta_r`, `theta_s`, `alpha`, `n`, and `Ks`.}
+  \item{estimate_parameters}{Logical; allow NeuralPDE inverse estimation where supported.}
+  \item{hidden}{Hidden-layer widths.}
+  \item{maxiters}{Maximum PINN optimizer iterations.}
+  \item{strategy}{Collocation strategy: `weighted_interval` (recommended for ODE-specialized PINNs) or `grid` (mainly for testing/reproducibility).}
+  \item{collocation_points}{Number of collocation samples used by `weighted_interval`.}
+  \item{seed}{Seed.}
+  \item{julia}{Julia executable.}
+  \item{output_dir}{Output directory.}
+  \item{dry_run}{Return execution specification only.}
+}
+\value{An `nlr_pinn` object or dry-run specification.}
+\examples{
+s<-nl_data("sciml_soil_water");nl_pinn(s,"richards_1d","day","theta_cm3_cm3",depth="depth_cm",covariates=c("rain_mm_d","ET0_mm_d"),parameters=c(theta_r=.06,theta_s=.46,alpha=.035,n=1.55,Ks=12),dry_run=TRUE)
+f<-subset(nl_data("sciml_fruit_growth"),fruit_id==unique(nl_data("sciml_fruit_growth")$fruit_id)[1]);nl_pinn(f,"logistic_growth","day_after_set","fruit_mass_g",parameters=c(r=.2,K=200),dry_run=TRUE)
+n<-subset(nl_data("sciml_fertility_dynamic"),plot_id==unique(nl_data("sciml_fertility_dynamic")$plot_id)[1]);nl_pinn(n,"first_order_nutrient","day","plant_N_g_m2",parameters=c(k=.08,K=18),dry_run=TRUE)
+}

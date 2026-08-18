@@ -1,0 +1,124 @@
+---
+title: "Plant physiology: photosynthetic light response, water regimes, and nonlinear hierarchy"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Plant physiology: photosynthetic light response, water regimes, and nonlinear hierarchy}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(nlrFlow)
+```
+
+## Light-response data
+
+```{r}
+p <- nl_data("plant_physiology_light")
+nl_audit(p, "A_umol_CO2_m2_s", "PAR_umol_m2_s", c("water_regime", "plant_id"))
+ww <- subset(p, water_regime == "WellWatered")
+```
+
+## Rectangular versus non-rectangular hyperbola
+
+```{r}
+f_rect <- nl_fit(
+  data = ww, model = "rectangular_hyperbola",
+  response = "A_umol_CO2_m2_s", predictor = "PAR_umol_m2_s", engine = "nlsLM",
+  lower = c(Amax = 0, alpha = 1e-6, Rd = 0)
+)
+f_nonrect <- nl_fit(
+  data = ww, model = "nonrectangular_hyperbola",
+  response = "A_umol_CO2_m2_s", predictor = "PAR_umol_m2_s", engine = "nlsLM",
+  lower = c(Amax = 0, alpha = 1e-6, theta = 0.05, Rd = 0),
+  upper = c(Amax = Inf, alpha = Inf, theta = 0.999, Rd = Inf)
+)
+nl_compare(list(Rectangular = f_rect, Nonrectangular = f_nonrect))
+nl_diagnose(f_nonrect)
+nl_identify(f_nonrect)
+# nl_confregion(f_nonrect, n = 2000)
+# nl_curvature(f_nonrect)
+```
+
+The curvature parameter of the non-rectangular model can be weakly identified if the PAR range does not cover both low-light and saturating regions. Parameter constraints should reflect physiology, not simply optimizer convenience.
+
+## Water regime as a qualitative factor
+
+```{r, eval=FALSE}
+g <- nl_fit(
+  A_umol_CO2_m2_s ~ Amax*alpha*PAR_umol_m2_s/(Amax + alpha*PAR_umol_m2_s) - Rd,
+  data = p,
+  start = c(28, -5, -12, 0.07, -0.01, -0.02, 1.3),
+  engine = "gnls",
+  params = list(Amax ~ water_regime, alpha ~ water_regime, Rd ~ 1),
+  weights = nlme::varPower(form = ~ pmax(abs(fitted(.)), 0.1))
+)
+summary(g)
+```
+
+## Plant-level nonlinear mixed model
+
+```{r, eval=FALSE}
+m <- nl_mixed(
+  A_umol_CO2_m2_s ~ Amax*alpha*PAR_umol_m2_s/(Amax + alpha*PAR_umol_m2_s) - Rd,
+  data = p,
+  fixed = list(Amax ~ water_regime, alpha ~ water_regime, Rd ~ 1),
+  random = Amax ~ 1 | plant_id,
+  start = c(28, -5, -12, 0.07, -0.01, -0.02, 1.3),
+  method = "ML"
+)
+```
+
+This model preserves repeated measurements within plant. Treating every gas-exchange measurement as an independent replicate would overstate the effective sample size.
+
+## Bayesian Student-t model for heavy-tailed measurement error
+
+```{r, eval=FALSE}
+bf <- brms::bf(
+  A_umol_CO2_m2_s ~ Amax*alpha*PAR_umol_m2_s/(Amax + alpha*PAR_umol_m2_s) - Rd,
+  Amax ~ 1 + water_regime + (1 | plant_id),
+  alpha ~ 1 + water_regime,
+  Rd ~ 1,
+  nl = TRUE
+)
+pri <- c(
+  brms::prior(normal(25, 10), nlpar = "Amax"),
+  brms::prior(lognormal(log(0.06), 0.5), nlpar = "alpha", lb = 0),
+  brms::prior(normal(1.5, 1), nlpar = "Rd", lb = 0)
+)
+b <- nl_bayes(bf, p, prior = pri, family = brms::student(), chains = 4, cores = 4)
+nl_ppcheck(b, type = "dens_overlay")
+```
+
+## Saturation and inhibition models elsewhere in physiology
+
+`nl_models()` also exposes Hill, Emax, Michaelis-Menten and substrate-inhibition equations. These can represent concentration-response, enzyme kinetics or substrate inhibition when their mechanistic assumptions match the experiment.
+
+```{r}
+subset(nl_models(), category %in% c("physiology", "dose_response", "saturation"))
+```
+
+## Publication output
+
+```{r, eval=FALSE}
+pub <- nl_plot(f_nonrect, interval = "confidence")
+nl_save_plot(pub, "photosynthetic_light_response.svg", 180, 120, "mm")
+nl_table(f_nonrect, "parameters", "gt")
+```
+
+```{r eval=FALSE}
+nl_bayes_diagnose(b)
+# Compare Bayesian light-response specifications after fitting both:
+# nl_bayes_compare(list(Rectangular=b_rect, Nonrectangular=b), method="stacking")
+```
+
+```{r, eval=FALSE}
+# Grid-start search when the light-response model is sensitive to initialization
+nl_multistart(A_umol_CO2_m2_s~Amax*alpha*PAR_umol_m2_s/(Amax+alpha*PAR_umol_m2_s)-Rd, ww, c(Amax=5,alpha=.005,Rd=0), c(Amax=60,alpha=.3,Rd=6), iter=c(4,4,4))
+```
+
+```{r, eval=FALSE}
+# Global-search fallback if the light-response fit remains initialization-sensitive
+nl_global_start(A_umol_CO2_m2_s~Amax*alpha*PAR_umol_m2_s/(Amax+alpha*PAR_umol_m2_s)-Rd, ww, c(Amax=1,alpha=.001,Rd=0), c(Amax=80,alpha=.5,Rd=10), pop_size=60, maxiter=300, run=50)
+```

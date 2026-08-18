@@ -1,0 +1,60 @@
+---
+title: "Diagnostics and Reproducibility for Scientific Machine Learning"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Diagnostics and Reproducibility for Scientific Machine Learning}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+```
+
+# Training loss is not a scientific diagnostic
+
+`nl_sciml_diagnose()` combines trajectory error, available physics-loss information, neural-correction magnitude, training history, and optional repeated-seed fits. SciML's sensitivity infrastructure enables differentiation through differential-equation solvers, but numerical differentiability does not remove the need to test identifiability, stability, and extrapolation [@Rackauckas2020UDE].
+
+# 1. Neural ODE diagnostic cycle
+
+```{r node, eval=FALSE}
+fruit <- nl_data("sciml_fruit_growth")
+f1 <- subset(fruit,fruit_id==unique(fruit_id)[1])
+node <- nl_neural_ode(f1,"day_after_set","fruit_mass_g",c("temperature_C","soil_water_rel"),seed=201)
+diag_node <- nl_sciml_diagnose(node)
+nl_plot(diag_node)
+nl_table(diag_node)
+```
+
+# 2. UDE diagnostic cycle
+
+```{r ude, eval=FALSE}
+crop <- nl_data("sciml_crop_growth")
+c1 <- subset(crop,plot_id==unique(plot_id)[1])
+ude <- nl_ude(c1,"day","biomass_g_m2",c("temperature_C","PAR_MJ_m2_d","soil_water_rel","nitrogen_rel"),template="crop_growth_rue",known_parameters=c(RUE=2.8,Topt=26,Twidth=10,respiration=.01),seed=202)
+diag_ude <- nl_sciml_diagnose(ude,thresholds=c(rmse_ratio=.20,physics_loss=.05,neural_fraction=.50))
+nl_plot(diag_ude)
+```
+
+# 3. PINN diagnostic cycle
+
+```{r pinn, eval=FALSE}
+sw <- nl_data("sciml_soil_water")
+pinn <- nl_pinn(sw,"richards_1d","day","theta_cm3_cm3",depth="depth_cm",covariates=c("rain_mm_d","ET0_mm_d"),parameters=c(theta_r=.06,theta_s=.46,alpha=.035,n=1.55,Ks=8),seed=203)
+diag_pinn <- nl_sciml_diagnose(pinn)
+nl_table(diag_pinn)
+```
+
+# Seed stability
+
+A neural model that changes scientific conclusions across reasonable seeds is not stable enough for mechanistic interpretation. Refit at multiple frozen seeds and pass the fits to `seed_fits`.
+
+```{r seeds, eval=FALSE}
+fits <- lapply(c(301,302,303,304,305),function(s) nl_neural_ode(f1,"day_after_set","fruit_mass_g",c("temperature_C","soil_water_rel"),seed=s))
+nl_sciml_diagnose(fits[[1]],seed_fits=fits[-1])
+```
+
+# Minimum reporting checklist
+
+Report data split and experimental unit, architecture, activation, solver, optimizer sequence, sensitivity method, stopping rule, seeds, trajectory error, physics loss where relevant, parameter bounds, conservation or shape checks, neural-correction magnitude for UDEs, seed sensitivity, interpolation and extrapolation assessment, and a simpler scientific comparator.

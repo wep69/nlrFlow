@@ -1,0 +1,42 @@
+number,file,title,phase
+1,01-foundations.Rmd,Foundations of nonlinear regression,core_1_44
+2,02-starting-values-convergence.Rmd,Starting values and convergence,core_1_44
+3,03-okra-case-study.Rmd,Okra fruit growth: from raw observations to biological rates,core_1_44
+4,04-agronomy-general.Rmd,"General agronomy: cultivar growth, qualitative factors, and hierarchical curves",core_1_44
+5,05-soils.Rmd,"Soil science: infiltration, water retention, sorption, and dependence structures",core_1_44
+6,06-soil-fertility.Rmd,"Soil fertility: nutrient-response curves, plateaus, soil classes, and uncertainty",core_1_44
+7,07-plant-physiology.Rmd,"Plant physiology: photosynthetic light response, water regimes, and nonlinear hierarchy",core_1_44
+8,08-bootstrap-inference.Rmd,Bootstrap and nonlinear uncertainty,core_1_44
+9,09-robust-quantile.Rmd,Robust and quantile nonlinear regression,core_1_44
+10,10-gnls-factors.Rmd,"Heteroscedasticity, correlation, and qualitative factors",core_1_44
+11,11-mixed-effects.Rmd,Nonlinear mixed-effects models,core_1_44
+12,12-bayesian.Rmd,Bayesian nonlinear models,core_1_44
+13,13-diagnostics-identifiability.Rmd,Diagnostics and identifiability,core_1_44
+14,14-publication-outputs.Rmd,Publication-ready graphics and tables,core_1_44
+15,15-state-of-the-art.Rmd,State of the art and ecosystem rationale,core_1_44
+16,16-simulation-validation.Rmd,Simulation and validation framework,core_1_44
+17,17-api-reference-1.Rmd,API example reference 1: okra,core_1_44
+18,18-api-reference-2.Rmd,API example reference 2: soil and fertility,core_1_44
+19,19-api-reference-3.Rmd,API example reference 3: agronomy and physiology,core_1_44
+20,20-dynamic-ode.Rmd,Dynamic and ODE-based nonlinear models,core_1_44
+21,21-automatic-differentiation-rtmb.Rmd,"Automatic Differentiation, RTMB, and Fast Bayesian Approximation",phase_D1_45_63
+22,22-conformal-measurement-error.Rmd,Conformal Prediction and Measurement Error,phase_D1_45_63
+23,23-sensitivity-optimal-design.Rmd,Global Sensitivity and Optimal Nonlinear Experimental Design,phase_D1_45_63
+24,24-distributional-censoring-quantile.Rmd,"Distributional Nonlinear Regression: Quantiles, Variance, Censoring and Truncation",phase_D1_45_63
+25,25-identifiability-state-space.Rmd,Structural Identifiability Screens and Stochastic State-Space Models,phase_D1_45_63
+26,26-gp-surrogate-abc-uncertainty.Rmd,"Model Discrepancy, Surrogates, Cubature and ABC",phase_D1_45_63
+27,27-phase-d1-api-examples.Rmd,Phase D1 API: Cross-Domain Examples,phase_D1_45_63
+28,28-symbolic-knowledge-discovery.Rmd,Knowledge-Guided Symbolic Regression and Equation Discovery,phase_D2_64_67
+29,29-model-discrimination-sequential-discovery.Rmd,Model Discrimination and Sequential Experiment Discovery,phase_D2_64_67
+30,30-phase-d2-api-examples.Rmd,Phase D2 API: Cross-Domain Examples,phase_D2_64_67
+31,31-neural-ode-agronomy.Rmd,Neural ODEs for agronomic and fruit-growth dynamics,phase_E_68_74
+32,32-ude-mechanistic-crop-growth.Rmd,Universal Differential Equations for mechanistic crop growth,phase_E_68_74
+33,33-pinn-soil-water-richards.Rmd,Physics-informed soil-water modeling with the Richards equation,phase_E_68_74
+34,34-pinn-and-neural-dynamics-plant-physiology.Rmd,PINN and neural dynamics for plant physiology,phase_E_68_74
+35,35-missing-physics-fertility-and-soils.Rmd,Missing-physics discovery in fertility and soil processes,phase_E_68_74
+36,36-ude-symbolic-mechanism-discovery.Rmd,UDE to symbolic mechanism discovery,phase_E_68_74
+37,37-sciml-diagnostics-and-reproducibility.Rmd,SciML diagnostics and reproducibility,phase_E_68_74
+38,38-dynamic-design-and-optimal-measurement.Rmd,Dynamic design and optimal measurement,phase_E_68_74
+39,39-dynamic-irrigation-and-fertigation-control.Rmd,Dynamic irrigation and fertigation control,phase_E_68_74
+40,40-full-sciml-discovery-cycle.Rmd,Full SciML discovery cycle,phase_E_68_74
+41,41-phase-e-api-examples.Rmd,Phase E API: cross-domain examples,phase_E_68_74

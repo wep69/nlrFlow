@@ -1,0 +1,58 @@
+---
+title: "Dynamic Optimal Measurement Design in Agronomy"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Dynamic Optimal Measurement Design in Agronomy}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+```
+
+# The next measurement is part of the model
+
+`nl_dynamic_design()` extends the package's nonlinear design philosophy to trajectories. It scores candidate times according to local curvature, disagreement among competing predictions, or an uncertainty score supplied by the fitted object. The implementation is intentionally transparent rather than claiming a universal Bayesian design criterion. Sequential nonlinear design is an active research area [@BubelDesign2025; @Ghosh2026PICS].
+
+# 1. Fruit-growth sampling times
+
+```{r fruit, eval=FALSE}
+fruit <- nl_data("sciml_fruit_growth")
+f1 <- subset(fruit,fruit_id==unique(fruit_id)[1])
+fit <- nl_neural_ode(f1,"day_after_set","fruit_mass_g",c("temperature_C","soil_water_rel"),seed=401)
+des_fruit <- nl_dynamic_design(fit,candidates=seq(2,34,1),n_points=4,criterion="curvature",min_distance=3)
+nl_plot(des_fruit)
+nl_table(des_fruit)
+```
+
+Curvature-based sampling preferentially targets rapid changes. It is useful for characterizing growth transitions but is not automatically optimal for estimating every parameter.
+
+# 2. Crop-growth model discrimination
+
+```{r crop, eval=FALSE}
+crop <- nl_data("sciml_crop_growth")
+c1 <- subset(crop,plot_id==unique(plot_id)[1])
+node <- nl_neural_ode(c1,"day","biomass_g_m2",c("temperature_C","PAR_MJ_m2_d","soil_water_rel","nitrogen_rel"),seed=402)
+ude <- nl_ude(c1,"day","biomass_g_m2",c("temperature_C","PAR_MJ_m2_d","soil_water_rel","nitrogen_rel"),template="crop_growth_rue",known_parameters=c(RUE=2.8,Topt=26,Twidth=10,respiration=.01),seed=403)
+des_crop <- nl_dynamic_design(list(node,ude),candidates=seq(0,98,2),n_points=5,criterion="discrimination",min_distance=7)
+nl_plot(des_crop)
+```
+
+# 3. Soil-water monitoring times
+
+```{r water, eval=FALSE}
+sw <- nl_data("sciml_soil_water")
+pinn <- nl_pinn(sw,"richards_1d","day","theta_cm3_cm3",depth="depth_cm",covariates=c("rain_mm_d","ET0_mm_d"),parameters=c(theta_r=.06,theta_s=.46,alpha=.035,n=1.55,Ks=8),seed=404)
+des_water <- nl_dynamic_design(pinn,candidates=seq(0,20,.5),n_points=6,criterion="curvature",min_distance=1)
+nl_table(des_water)
+```
+
+# Practical interpretation
+
+The output table ranks candidate observations. A recommended design must still respect field logistics, destructive-sampling constraints, sensor availability, plot randomization, and the experimental unit. Optimization never overrides experimental design principles.
+
+## Irregular sampling calendars
+
+Agronomic sampling dates are often irregular because destructive harvests, weather, and laboratory constraints interrupt nominal schedules. The `curvature` criterion therefore uses spacing-aware finite differences rather than a raw second difference. Candidate times can be irregular without implicitly assuming equal spacing. For `criterion = "uncertainty"`, supply an ensemble or list of at least two fitted dynamic models so that the score represents predictive spread rather than the local slope of one trajectory.

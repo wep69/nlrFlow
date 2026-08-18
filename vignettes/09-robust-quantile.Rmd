@@ -1,0 +1,23 @@
+---
+title: "Robust and quantile nonlinear regression"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Robust and quantile nonlinear regression}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(nlrFlow)
+```
+
+Robust and quantile engines are optional. They should be used to answer distinct scientific questions, not as automatic replacements for a poorly specified mean function.
+
+```{r eval=FALSE}
+raw <- nl_data("okra_growth_raw")
+start <- list(Asym=18,k=.44,xmid=3.7)
+nl_robust(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))),raw,start)
+nl_quantile(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))),raw,start,tau=.5)
+nl_quantile(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))),raw,start,tau=.9)
+```

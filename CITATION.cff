@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use nlrFlow, please cite the software and the numerical backends used in your analysis."
+title: "nlrFlow: Integrated Scientific Workflows for Nonlinear Regression in R"
+type: software
+version: 0.3.0.9000
+date-released: 2026-08-17
+authors:
+  - family-names: Pereira
+    given-names: Walter Esfrain
+    orcid: "https://orcid.org/0000-0003-1085-0191"
+  - family-names: Pereira Martinez
+    given-names: Magali Haidee
+    orcid: "https://orcid.org/0009-0009-5419-959X"
+license: MIT

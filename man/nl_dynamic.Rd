@@ -1,0 +1,23 @@
+\name{nl_dynamic}
+\alias{nl_dynamic}
+\title{Fit or solve advanced dynamic nonlinear mixed models}
+\description{Provides a thin, auditable adapter to `nlmixr2::nlmixr2` for ODE-based nonlinear mixed-effects models. The model function retains native nlmixr2 syntax so that differential equations, random effects, covariates, and residual models are not silently simplified by nlrFlow.}
+\usage{nl_dynamic(model,data,est="saem",control=list(),...)}
+\arguments{
+  \item{model}{An nlmixr2 model function/object.}
+  \item{data}{Event/observation data accepted by nlmixr2.}
+  \item{est}{Estimation method, for example `saem` or `focei`.}
+  \item{control}{Optional nlmixr2 control object/list.}
+  \item{...}{Additional arguments to `nlmixr2::nlmixr2`.}
+}
+\value{An `nlrfit` wrapping the nlmixr2 fitted object.}
+\examples{
+\dontrun{
+# Example 1: dynamic crop growth with plot-level random carrying capacity.
+nl_dynamic(crop_ode_model, crop_longitudinal, est="saem")
+# Example 2: soil nutrient-pool turnover with soil-specific covariates.
+nl_dynamic(soil_pool_model, soil_longitudinal, est="focei")
+# Example 3: plant physiological induction/recovery ODE model.
+nl_dynamic(physiology_ode_model, physiology_longitudinal, est="saem")
+}
+}

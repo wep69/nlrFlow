@@ -1,0 +1,22 @@
+\name{nl_mean_variance}
+\alias{nl_mean_variance}
+\title{Joint nonlinear mean-variance regression}
+\description{Fits a Gaussian nonlinear model in which the conditional mean and log standard deviation have separate parameterized formulas. The variance formula may use `.mu`, the current fitted mean, enabling explicit mean-dependent dispersion.}
+\usage{nl_mean_variance(mean_formula, variance_formula, data, start_mean, start_variance, method="BFGS", control=list(maxit=5000))}
+\arguments{
+  \item{mean_formula}{Nonlinear response formula.}
+  \item{variance_formula}{One-sided formula for log SD, e.g. `~ g0 + g1*log(.mu)`.}
+  \item{data}{Data frame.}
+  \item{start_mean}{Named starting values for the nonlinear mean.}
+  \item{start_variance}{Named starting values for the log-SD model.}
+  \item{method}{Optimizer method.}
+  \item{control}{Optimizer control list.}
+}
+\value{An `nlr_mean_variance_fit` object.}
+\examples{
+\dontrun{
+o <- nl_data("okra_growth_raw"); nl_mean_variance(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))),~g0+g1*log(pmax(.mu,1e-4)),o,c(Asym=18,k=.4,xmid=4),c(g0=-1,g1=.3))
+s <- subset(nl_data("soil_p_sorption"),soil_class=="Clayey"); nl_mean_variance(sorbed_P_mg_kg~qmax*K*solution_P_mg_L/(1+K*solution_P_mg_L),~g0+g1*log1p(.mu),s,c(qmax=600,K=.2),c(g0=1,g1=.1))
+p <- nl_data("plant_physiology_light"); nl_mean_variance(A_umol_CO2_m2_s~Amax*alpha*PAR_umol_m2_s/(Amax+alpha*PAR_umol_m2_s)-Rd,~g0+g1*sqrt(abs(.mu)),p,c(Amax=30,alpha=.06,Rd=1),c(g0=-.2,g1=.03))
+}
+}

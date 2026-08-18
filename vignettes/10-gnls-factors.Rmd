@@ -1,0 +1,23 @@
+---
+title: "Heteroscedasticity, correlation, and qualitative factors"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Heteroscedasticity, correlation, and qualitative factors}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(nlrFlow)
+```
+
+`nlme::gnls` can model nonlinear parameters as functions of qualitative factors while simultaneously representing variance functions and within-group correlation.
+
+```{r eval=FALSE}
+a <- nl_data("agronomy_growth")
+start <- c(18, 2, 1, 0.09, -0.005, 0.01, 52)
+nl_fit(biomass_Mg_ha~Asym/(1+exp(-k*(day-xmid))),a,start=start,engine="gnls",params=list(Asym~cultivar,k~cultivar,xmid~1))
+nl_capabilities()
+nl_doctor()
+```

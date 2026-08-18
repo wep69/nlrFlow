@@ -1,0 +1,109 @@
+---
+title: "Soil science: infiltration, water retention, sorption, and dependence structures"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Soil science: infiltration, water retention, sorption, and dependence structures}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(nlrFlow)
+```
+
+## 1. Cumulative infiltration under soil management
+
+```{r}
+s <- nl_data("soil_infiltration")
+s$unit_id <- interaction(s$management, s$block, drop = TRUE)
+nl_audit(s, "cumulative_infiltration_mm", "time_min", c("management", "block"))
+one <- subset(s, management == "NoTill")
+fit_inf <- nl_fit(
+  data = one, model = "michaelis_menten",
+  response = "cumulative_infiltration_mm", predictor = "time_min",
+  engine = "nls"
+)
+nl_confint(fit_inf, "profile")
+nl_diagnose(fit_inf)
+```
+
+Michaelis-Menten is used here as a flexible saturation curve for teaching, not as a claim that it is a mechanistic infiltration law. The scientific meaning of the equation must always be considered before interpreting its parameters.
+
+### Management as a qualitative factor
+
+```{r, eval=FALSE}
+g_inf <- nl_fit(
+  cumulative_infiltration_mm ~ Vmax*time_min/(Km + time_min),
+  data = s,
+  start = c(110, 15, 25, 25, 5, 7),
+  engine = "gnls",
+  params = list(Vmax ~ management, Km ~ management),
+  weights = nlme::varPower(form = ~ fitted(.)),
+  correlation = nlme::corCAR1(form = ~ time_min | unit_id)
+)
+```
+
+The variance and correlation models are part of the statistical model. They should not be chosen solely because they improve AIC.
+
+## 2. Soil-water retention with van Genuchten
+
+```{r}
+wr <- nl_data("soil_water_retention")
+nl_audit(wr, "water_content_cm3_cm3", "pressure_head_kPa", "texture")
+loam <- subset(wr, texture == "Loamy")
+fit_vg <- nl_fit(
+  data = loam,
+  model = "van_genuchten",
+  response = "water_content_cm3_cm3",
+  predictor = "pressure_head_kPa",
+  engine = "nlsLM",
+  lower = c(theta_r = 0, theta_s = 0.20, alpha = 1e-6, n = 1.001),
+  upper = c(theta_r = 0.30, theta_s = 0.70, alpha = 2, n = 8)
+)
+nl_diagnose(fit_vg)
+nl_identify(fit_vg)
+# nl_curvature(fit_vg)
+```
+
+The registered parameterization uses the positive magnitude of pressure head. Physical constraints are essential because unconstrained optimization can return mathematically admissible but physically meaningless parameter combinations.
+
+```{r, eval=FALSE}
+b_vg <- nl_boot(fit_vg, R = 2000, type = "case", seed = 20260817)
+nl_confint(fit_vg, "bootstrap", boot = b_vg, bootstrap_interval = "bca")
+```
+
+For real core-level data, resampling should preserve the soil-core sampling unit when repeated measurements are taken from the same core.
+
+## 3. Phosphorus sorption with Langmuir and Freundlich equations
+
+```{r}
+ps <- nl_data("soil_p_sorption")
+clay <- subset(ps, soil_class == "Clayey")
+lang <- nl_fit(
+  data = clay, model = "langmuir",
+  response = "sorbed_P_mg_kg", predictor = "solution_P_mg_L", engine = "nlsLM",
+  lower = c(qmax = 0, K = 1e-8)
+)
+fr <- nl_fit(
+  data = clay, model = "freundlich",
+  response = "sorbed_P_mg_kg", predictor = "solution_P_mg_L", engine = "nlsLM",
+  lower = c(Kf = 1e-8, n = 1.001)
+)
+nl_compare(list(Langmuir = lang, Freundlich = fr))
+```
+
+Because Langmuir and Freundlich are generally non-nested, `nl_lrt()` is intentionally not the default comparison.
+
+## 4. Publication tables and figures
+
+```{r, eval=FALSE}
+nl_table(lang, "parameters", "gt")
+p <- nl_plot(fit_vg, interval = "confidence")
+nl_save_plot(p, "soil_water_retention.pdf", width = 180, height = 120, units = "mm")
+```
+
+```{r, eval=FALSE}
+# Multistart sensitivity analysis for a soil sorption curve
+nl_multistart(sorbed_P_mg_kg~qmax*K*solution_P_mg_L/(1+K*solution_P_mg_L), clay, c(qmax=100,K=.001), c(qmax=1200,K=1), iter=150, lhstype="improved")
+```

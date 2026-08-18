@@ -1,0 +1,32 @@
+---
+title: "Starting values and convergence"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Starting values and convergence}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(nlrFlow)
+```
+
+```{r}
+okra <- nl_data("okra_growth_means")
+nl_audit(okra,"fruit_length","day_after_flowering")
+nl_start(okra,"fruit_length","day_after_flowering","gompertz")
+fit <- nl_fit(data=okra,model="gompertz",response="fruit_length",predictor="day_after_flowering",engine="nls")
+nl_identify(fit)
+```
+
+```{r, eval=FALSE}
+# Maximin Latin-hypercube start search
+nl_multistart(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))), nl_data("okra_growth_means"), c(Asym=12,k=.05,xmid=0), c(Asym=25,k=2,xmid=12), iter=250, lhstype="maximin")
+```
+
+```{r, eval=FALSE}
+# Genetic algorithm fallback only after heuristic/multistart approaches are inadequate
+gs <- nl_global_start(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))), nl_data("okra_growth_means"), c(Asym=10,k=.01,xmid=-2), c(Asym=30,k=3,xmid=15), pop_size=80, maxiter=500, run=75)
+nl_fit(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))), nl_data("okra_growth_means"), start=as.list(gs$start), engine="nls")
+```

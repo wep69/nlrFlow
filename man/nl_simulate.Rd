@@ -1,0 +1,24 @@
+\name{nl_simulate}
+\alias{nl_simulate}
+\title{Simulate nonlinear scientific datasets}
+\description{Simulates observations from registered nonlinear models with optional groups, group-specific parameter shifts, Gaussian or Student-t noise, heteroscedasticity, and frozen seeds.}
+\usage{nl_simulate(model,x,parameters,sigma=1,distribution=c("gaussian","student"),hetero_power=0,group=NULL,group_effects=NULL,seed=20260817)}
+\arguments{
+  \item{model}{Registered model.}
+  \item{x}{Predictor vector.}
+  \item{parameters}{Named parameter values.}
+  \item{sigma}{Residual scale.}
+  \item{distribution}{`gaussian` or `student`.}
+  \item{hetero_power}{Power controlling residual scale growth with fitted magnitude.}
+  \item{group}{Optional group vector.}
+  \item{group_effects}{Optional named list whose elements are named parameter-shift vectors for corresponding group labels.}
+  \item{seed}{Random seed.}
+}
+\value{A data frame with predictor, fitted truth, response, and optional group.}
+\examples{
+nl_simulate("gompertz",1:25,c(Asym=18,k=.44,xmid=3.7),sigma=.5,seed=1)
+nl_simulate("mitscherlich",c(0,30,60,90,120,180),c(Asym=8,delta=5,k=.025),sigma=.25,hetero_power=.5,seed=2)
+nl_simulate("rectangular_hyperbola",c(0,100,300,600,1000,1600),c(Amax=30,alpha=.07,Rd=1.2),sigma=.6,distribution="student",seed=3)
+# Group-specific parameter shifts are explicit and auditable.
+nl_simulate("gompertz",rep(1:10,2),c(Asym=18,k=.4,xmid=4),group=rep(c("Control","Stress"),each=10),group_effects=list(Stress=c(Asym=-3,k=-.05)),seed=4)
+}

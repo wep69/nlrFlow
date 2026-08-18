@@ -1,0 +1,64 @@
+---
+title: "Dynamic Irrigation and Fertigation Control"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Dynamic Irrigation and Fertigation Control}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+```
+
+# From explanation to intervention
+
+Block 74 includes `nl_control()`, which optimizes a bounded piecewise-constant control covariate through an already fitted Neural ODE or UDE. The objective combines a terminal target with a penalty on the **time-integrated control input**. This avoids treating short and long control intervals as if they had the same cost. This implements a transparent agronomic control problem rather than presenting a neural policy as a black box. Differentiable and optimization-oriented control of neural differential equations is supported by the SciML sensitivity/optimization stack [@Rackauckas2020UDE].
+
+# 1. Water-status control in crop growth
+
+```{r crop, eval=FALSE}
+crop <- nl_data("sciml_crop_growth")
+c1 <- subset(crop,plot_id==unique(plot_id)[1])
+ude_crop <- nl_ude(c1,"day","biomass_g_m2",c("temperature_C","PAR_MJ_m2_d","soil_water_rel","nitrogen_rel"),template="crop_growth_rue",known_parameters=c(RUE=2.8,Topt=26,Twidth=10,respiration=.01),seed=501)
+ctl_crop <- nl_control(
+  ude_crop, control_covariate="soil_water_rel",
+  control_times=seq(0,98,14), lower=.40, upper=.95,
+  target_state="biomass_g_m2", input_penalty=.01, maxiters=300
+)
+nl_plot(ctl_crop)
+nl_table(ctl_crop)      # schedule, duration, and integrated input
+ctl_crop$summary        # objective, terminal target, integrated control
+```
+
+The control variable here is a normalized water-status teaching proxy. A field irrigation recommendation would require a physically linked irrigation amount, soil-water balance, constraints on application capacity, weather forecasts, and independent validation.
+
+# 2. Fruit water management
+
+```{r fruit, eval=FALSE}
+fruit <- nl_data("sciml_fruit_growth")
+f1 <- subset(fruit,fruit_id==unique(fruit_id)[1])
+ude_fruit <- nl_ude(f1,"day_after_set","fruit_mass_g",c("temperature_C","soil_water_rel"),template="fruit_growth",known_parameters=c(r=.20,K=200),seed=502)
+ctl_fruit <- nl_control(ude_fruit,"soil_water_rel",seq(0,30,5),.45,.95,"fruit_mass_g",input_penalty=.02,maxiters=250)
+nl_plot(ctl_fruit)
+```
+
+# 3. Fertility/fertigation teaching example
+
+```{r fert, eval=FALSE}
+fert <- nl_data("sciml_fertility_dynamic")
+f1 <- subset(fert,plot_id==unique(plot_id)[1])
+ude_n <- nl_ude(f1,"day",c("plant_N_g_m2","soil_mineral_N_mg_kg"),c("temperature_C","soil_water_rel"),template="nitrogen_uptake",known_parameters=c(vmax=.08,Km=20),seed=503)
+ctl_n <- nl_control(ude_n,"soil_water_rel",seq(0,84,14),.40,.95,"plant_N_g_m2",input_penalty=.015,maxiters=250)
+nl_table(ctl_n)
+ctl_n$summary
+```
+
+# Safety and interpretation
+
+`nl_control()` produces a model-based scenario, not an agronomic prescription. Before field use, translate normalized controls into physical units, impose equipment and safety constraints, include water/nutrient balance, validate under independent environments, and perform sensitivity analysis to uncertain weather and model parameters.
+
+## Control-horizon accounting
+
+The control penalty is integrated over the duration for which each piecewise-constant action is applied. `nl_control()` therefore requires the control schedule to begin at or before the fitted model horizon and prevents control knots beyond the fitted horizon. This avoids rewarding or penalizing a terminal control value that has no modeled duration. The resulting schedule remains conditional on the fitted model and its stated constraints.

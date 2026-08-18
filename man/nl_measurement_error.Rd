@@ -1,0 +1,24 @@
+\name{nl_measurement_error}
+\alias{nl_measurement_error}
+\title{Nonlinear errors-in-variables regression}
+\description{Fits a Gaussian nonlinear measurement-error model in which each observed predictor is a noisy measurement of a latent true predictor. Both x and y measurement standard deviations may be observation-specific. This avoids the attenuation and parameter bias that can occur when the predictor is treated as exact.}
+\usage{nl_measurement_error(formula, data, start, predictor, sd_x, sd_y, lower = -Inf, upper = Inf, control = list(maxit=5000))}
+\arguments{
+  \item{formula}{Nonlinear mean formula using `predictor`.}
+  \item{data}{Data frame.}
+  \item{start}{Named nonlinear parameter starts.}
+  \item{predictor}{Predictor column subject to measurement error.}
+  \item{sd_x}{Predictor measurement SD: scalar, vector or column name.}
+  \item{sd_y}{Response measurement/residual SD: scalar, vector or column name.}
+  \item{lower}{Lower bounds for nonlinear parameters.}
+  \item{upper}{Upper bounds for nonlinear parameters.}
+  \item{control}{Optimizer control list.}
+}
+\value{An `nlr_eiv_fit` with parameter estimates and estimated latent x values.}
+\examples{
+\dontrun{
+s <- subset(nl_data("soil_p_sorption"),soil_class=="Clayey"); nl_measurement_error(sorbed_P_mg_kg~qmax*K*solution_P_mg_L/(1+K*solution_P_mg_L),s,c(qmax=600,K=.2),"solution_P_mg_L",sd_x=.05,sd_y=10)
+p <- subset(nl_data("plant_physiology_light"),water_regime=="WellWatered"); nl_measurement_error(A_umol_CO2_m2_s~Amax*alpha*PAR_umol_m2_s/(Amax+alpha*PAR_umol_m2_s)-Rd,p,c(Amax=30,alpha=.06,Rd=1),"PAR_umol_m2_s",sd_x=10,sd_y=1)
+f <- subset(nl_data("soil_fertility_p"),soil_class=="Loamy"); nl_measurement_error(grain_yield_Mg_ha~Asym-delta*exp(-k*P2O5_kg_ha),f,c(Asym=8,delta=5,k=.02),"P2O5_kg_ha",sd_x=2,sd_y=.25)
+}
+}

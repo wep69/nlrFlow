@@ -1,0 +1,22 @@
+\name{nl_sequential_discovery}
+\alias{nl_sequential_discovery}
+\title{Sequential experimental design for model discovery and discrimination}
+\description{Selects new predictor values where plausible nonlinear models disagree most, scaled by their residual noise and optionally weighted by current model probabilities. The default criterion is a T-optimal-like weighted pairwise predictive separation. This closes the discovery loop: fit candidates, identify the most informative new experiment, collect data, and refit.}
+\usage{nl_sequential_discovery(fits,data_template,predictor,candidates,model_weights=NULL, existing=NULL,min_distance=0,n_points=1,noise_adjust=TRUE)}
+\arguments{
+  \item{fits}{Named list of competing `nlrfit` objects or `nlr_discovery`.}
+  \item{data_template}{One-row data frame used to hold other covariates fixed.}
+  \item{predictor}{Predictor varied by the new experiment.}
+  \item{candidates}{Numeric candidate predictor values.}
+  \item{model_weights}{Optional non-negative model weights; defaults to normalized AICc weights.}
+  \item{existing}{Optional existing predictor values.}
+  \item{min_distance}{Minimum distance from existing/selected values.}
+  \item{n_points}{Number of sequential points proposed in the current batch.}
+  \item{noise_adjust}{Logical; divide disagreement by average residual variance.}
+}
+\value{An `nlr_sequential_discovery` object with candidate scores and selected points.}
+\examples{
+o<-nl_data("okra_growth_means");do<-nl_discover(o,"fruit_length","day_after_flowering",c("gompertz","logistic","richards"),engine="nls");nl_sequential_discovery(do,o[1,,drop=FALSE],"day_after_flowering",1:25,existing=o$day_after_flowering,n_points=2)
+f<-subset(nl_data("soil_fertility_p"),soil_class=="Loamy");df<-nl_discover(f,"grain_yield_Mg_ha","P2O5_kg_ha",c("mitscherlich","michaelis_menten"),engine="nls");nl_sequential_discovery(df,f[1,,drop=FALSE],"P2O5_kg_ha",seq(0,300,10),existing=f$P2O5_kg_ha,n_points=2)
+s<-subset(nl_data("soil_p_sorption"),soil_class=="Clayey");ds<-nl_discover(s,"sorbed_P_mg_kg","solution_P_mg_L",c("langmuir","freundlich"),engine="nls");nl_sequential_discovery(ds,s[1,,drop=FALSE],"solution_P_mg_L",seq(0,max(s$solution_P_mg_L)*1.2,length=50),existing=s$solution_P_mg_L,n_points=2)
+}

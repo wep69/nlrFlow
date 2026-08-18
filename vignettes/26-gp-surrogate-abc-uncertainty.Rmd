@@ -1,0 +1,51 @@
+---
+title: "Model Discrepancy, Surrogates, Cubature and ABC"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Model Discrepancy, Surrogates, Cubature and ABC}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+```
+
+# Mechanistic curve plus residual GP
+
+`nl_gp_discrepancy()` intentionally fits the GP after the mechanistic fit. This avoids silently allowing the flexible component to alter mechanistic parameter interpretation. A large structured discrepancy indicates that the mechanistic mean function should be reconsidered.
+
+```{r gp, eval=FALSE}
+o<-nl_data("okra_growth_means"); fo<-nl_fit(data=o,model="gompertz",response="fruit_length",predictor="day_after_flowering",engine="nls"); nl_gp_discrepancy(fo,"day_after_flowering")
+f<-subset(nl_data("soil_fertility_p"),soil_class=="Loamy"); ff<-nl_fit(data=f,model="mitscherlich",response="grain_yield_Mg_ha",predictor="P2O5_kg_ha",engine="nls"); nl_gp_discrepancy(ff,"P2O5_kg_ha")
+s<-subset(nl_data("soil_water_retention"),texture=="Clayey"); fs<-nl_fit(data=s,model="van_genuchten",response="water_content_cm3_cm3",predictor="pressure_head_kPa",engine="nls"); nl_gp_discrepancy(fs,"pressure_head_kPa")
+```
+
+# Surrogate validation is mandatory
+
+```{r surrogate, eval=FALSE}
+X<-expand.grid(A=seq(15,22,length=8),k=seq(.2,.7,length=8));y<-with(X,A*k/exp(1));su1<-nl_surrogate(X,y,"quadratic");nl_surrogate_validate(su1,X,y)
+X2<-data.frame(qmax=runif(50,300,800),K=runif(50,.02,.5));y2<-with(X2,qmax*K*10/(1+K*10));su2<-nl_surrogate(X2,y2,"gp");nl_surrogate_validate(su2,X2,y2)
+X3<-data.frame(Amax=runif(50,10,50),alpha=runif(50,.01,.2));y3<-with(X3,Amax*alpha*1000/(Amax+alpha*1000));su3<-nl_surrogate(X3,y3,"gp");nl_surrogate_validate(su3,X3,y3)
+```
+
+# Deterministic propagation
+
+```{r propagate, eval=FALSE}
+o<-nl_data("okra_growth_means");fit<-nl_fit(data=o,model="gompertz",response="fruit_length",predictor="day_after_flowering",engine="nls");nl_propagate(coef(fit),vcov(fit$fit),function(b)b["Asym"]*b["k"]/exp(1))
+f<-subset(nl_data("soil_fertility_p"),soil_class=="Loamy");sf<-nl_fit(data=f,model="mitscherlich",response="grain_yield_Mg_ha",predictor="P2O5_kg_ha",engine="nls");nl_propagate(coef(sf),vcov(sf$fit),function(b)-log(.5)/b["k"])
+s<-subset(nl_data("soil_infiltration"),management=="NoTill");si<-nl_fit(data=s,model="michaelis_menten",response="cumulative_infiltration_mm",predictor="time_min",engine="nls");nl_propagate(coef(si),vcov(si$fit),function(b)b["Vmax"]*.5)
+```
+
+# Likelihood-free inference
+
+```{r abc, eval=FALSE}
+obs<-c(2,4,8,12,16);prior<-function(n)cbind(A=runif(n,15,25),k=runif(n,.1,1));sim<-function(p)p["A"]*(1-exp(-p["k"]*(1:5)))+rnorm(5,0,.5);nl_abc(obs,sim,prior,function(z)c(mean(z),sd(z),max(z)),n_sim=2000)
+nl_abc(c(1,2,4,7),function(p)p[1]*(1-exp(-p[2]*(1:4))),function(n)cbind(A=runif(n,5,10),k=runif(n,.1,1)),function(z)c(z),n_sim=1000)
+nl_abc(c(.4,.3,.2),function(p)exp(-p[1]*(1:3))+rnorm(3,0,p[2]),function(n)cbind(k=runif(n,.01,2),sd=runif(n,.01,.3)),function(z)c(mean(z),diff(range(z))),n_sim=1000)
+```
+
+## Method references
+
+Recent sparse-cubature uncertainty propagation is discussed by @BubelCubature2025. The current `nl_propagate()` implementation is intentionally labelled as a simpler deterministic rule.

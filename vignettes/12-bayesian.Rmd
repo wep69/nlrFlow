@@ -1,0 +1,84 @@
+---
+title: "Bayesian nonlinear models"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Bayesian nonlinear models}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(nlrFlow)
+```
+
+Bayesian nonlinear models require explicit, scientifically defensible priors, especially when nonlinear parameters are weakly identified.
+
+```{r eval=FALSE}
+# bf <- brms::bf(fruit_length ~ Asym*exp(-exp(-k*(day_after_flowering-xmid))), Asym~1,k~1,xmid~1,nl=TRUE)
+# fit <- nl_bayes(bf,nl_data("okra_growth_raw"),prior=...)
+# nl_ppcheck(fit)
+nl_capabilities()
+nl_doctor()
+nl_teach("gompertz")
+```
+
+```{r, eval=FALSE}
+# Sampling diagnostics
+nl_bayes_diagnose(fit_bayes)
+# PSIS-LOO comparison and stacking weights after fitting alternative models
+nl_bayes_compare(list(M1=fit_bayes, M2=fit_bayes_alt), method="stacking")
+```
+
+
+## Posterior intervals and predictions
+
+`nlrFlow` does not apply Wald intervals to Bayesian fits. Parameter summaries use posterior draws, expected-response intervals use `posterior_epred()`, and new-observation intervals use `posterior_predict()`.
+
+```{r eval=FALSE}
+nl_confint(fit_bayes, method = "posterior", level = 0.95)
+
+new_okra <- data.frame(day_after_flowering = seq(1, 25, length.out = 100))
+nl_predict(fit_bayes, newdata = new_okra,
+           interval = "confidence", nsim = 1000)
+nl_predict(fit_bayes, newdata = new_okra,
+           interval = "prediction", nsim = 1000)
+```
+
+For hierarchical models, arguments such as `re_formula` can be passed through `...` to control whether predictions are conditional on, or marginal over, group-level effects.
+
+```{r eval=FALSE}
+# Population-level agronomic curve
+nl_predict(agri_bayes, newdata = agri_grid,
+           interval = "confidence", re_formula = NA)
+
+# Plant-level physiology prediction, retaining fitted group effects
+nl_predict(phys_bayes, newdata = phys_grid,
+           interval = "prediction", re_formula = NULL)
+```
+
+## Publication output
+
+```{r eval=FALSE}
+nl_table(fit_bayes, type = "parameters")
+nl_plot(fit_bayes,
+        x = "day_after_flowering", y = "fruit_length",
+        interval = "confidence")
+nl_report(fit_bayes, "okra_bayesian_report.md")
+```
+
+The plotting function requires explicit `x` and `y` names for `brms` objects because a nonlinear `brmsformula` may contain multiple parameter submodels and cannot be safely reduced to a single base-R formula automatically.
+
+## Posterior biological quantities
+
+Growth rates, inflection timing, midpoint timing and AUC can be propagated through posterior expected-response draws rather than through a frequentist delta approximation.
+
+```{r eval=FALSE}
+nl_derive(fit_bayes,
+          predictor = "day_after_flowering",
+          quantities = c("AGR", "RGR", "inflection", "AGRmax", "t50", "AUC"),
+          nsim = 1000,
+          re_formula = NA)
+```
+
+For treatment contrasts, `nl_contrast()` also accepts a named contrast matrix whose columns match `brms` posterior coefficient names and reports posterior intervals and the posterior probability that each contrast exceeds zero.

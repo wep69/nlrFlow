@@ -1,0 +1,22 @@
+\name{nl_robust}
+\alias{nl_robust}
+\title{Fit robust nonlinear regression}
+\description{Fits resistant nonlinear regression through `robustbase::nlrob`, retaining the nlrFlow metadata contract.}
+\usage{nl_robust(formula,data,start,method="M",lower=-Inf,upper=Inf,...)}
+\arguments{
+  \item{formula}{Nonlinear formula.}
+  \item{data}{Data frame.}
+  \item{start}{Named starting values.}
+  \item{method}{Robust method supported by `nlrob`.}
+  \item{lower}{Lower bounds.}
+  \item{upper}{Upper bounds.}
+  \item{...}{Additional arguments to `robustbase::nlrob`.}
+}
+\value{An `nlrfit` with engine `robust`.}
+\examples{
+\dontrun{
+okra <- nl_data("okra_growth_means"); nl_robust(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))),okra,list(Asym=18,k=.4,xmid=4))
+fert <- subset(nl_data("soil_fertility_p"),soil_class=="Loamy"); nl_robust(grain_yield_Mg_ha~Asym-delta*exp(-k*P2O5_kg_ha),fert,list(Asym=8,delta=5,k=.02))
+soil <- subset(nl_data("soil_infiltration"),management=="NoTill"); nl_robust(cumulative_infiltration_mm~Vmax*time_min/(Km+time_min),soil,list(Vmax=130,Km=30))
+}
+}

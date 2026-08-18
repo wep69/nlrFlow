@@ -1,0 +1,57 @@
+---
+title: "API example reference 1: okra"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{API example reference 1: okra}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(nlrFlow)
+```
+
+This reference vignette supplies a third documentation layer for public functions in the okra context. Heavy optional backends are shown with `eval=FALSE`.
+```{r eval=FALSE}
+# Public API coverage calls
+f <- nl_fit(data=nl_data("okra_growth_means"),model="gompertz",response="fruit_length",predictor="day_after_flowering",engine="nls")
+nl_audit(nl_data("okra_growth_means"),"fruit_length","day_after_flowering")
+nl_models()
+nl_model_info("gompertz")
+nl_capabilities()
+nl_data("soil_fertility_p")
+nl_start(nl_data("okra_growth_means"),"fruit_length","day_after_flowering","gompertz")
+nl_fit(data=nl_data("okra_growth_means"),model="gompertz",response="fruit_length",predictor="day_after_flowering",engine="nls")
+nl_fit_many(nl_data("okra_growth_means"),"fruit_length","day_after_flowering",c("logistic","gompertz"),engine="nls")
+nl_select(nl_fit_many(nl_data("okra_growth_means"),"fruit_length","day_after_flowering",c("logistic","gompertz"),engine="nls"))
+nl_compare(nl_fit_many(nl_data("okra_growth_means"),"fruit_length","day_after_flowering",c("logistic","gompertz"),engine="nls"))
+try(nl_lrt(f,f,nested=FALSE))
+nl_cv(f,k=3)
+nl_confint(f,"wald")
+nl_boot(f,R=10)
+nl_predict(f)
+nl_diagnose(f)
+nl_influence(f)
+nl_identify(f)
+nl_contrast(f,c(Asym=1,k=0,xmid=0))
+nl_curve_test(f,f,FALSE)
+nl_derive(f)
+# nl_robust(formula,data,start)
+# nl_quantile(formula,data,start,tau=.5)
+# nl_mixed(model,data,fixed,random,start)
+# nl_saemix(model_function,data,psi0,id,predictor,response,parameter_names)
+# nl_bayes(brms_formula,data,prior)
+# nl_ppcheck(bayes_fit)
+nl_simulate("gompertz",1:10,c(Asym=18,k=.4,xmid=4))
+# nl_plot(f)
+# nl_plot_diagnostics(f)
+nl_table(f,"parameters")
+# nl_save_plot(plot,"figure.svg")
+# nl_report(f,"report.md")
+nl_teach("gompertz")
+nl_tutor(FALSE)
+nl_doctor()
+# nl_ode_solve(c(B=1),0:10,ode_fun,c(r=.1,K=20))
+# nl_dynamic(nlmixr_model,long_data,est="saem")
+```

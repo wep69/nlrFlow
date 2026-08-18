@@ -1,0 +1,47 @@
+---
+title: "Structural Identifiability Screens and Stochastic State-Space Models"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Structural Identifiability Screens and Stochastic State-Space Models}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+```
+
+# Local structural screening
+
+`nl_structural_identify()` evaluates a noise-free parameter-sensitivity matrix. Rank deficiency indicates that the supplied design cannot locally separate parameter directions. The result is intentionally called a screen: formal global structural identifiability for ODE systems requires symbolic differential-algebraic analysis.
+
+```{r id, eval=FALSE}
+o<-nl_data("okra_growth_means"); nl_structural_identify(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))),o,c(Asym=18,k=.4,xmid=4))
+s<-subset(nl_data("soil_p_sorption"),soil_class=="Clayey"); nl_structural_identify(sorbed_P_mg_kg~qmax*K*solution_P_mg_L/(1+K*solution_P_mg_L),s,c(qmax=600,K=.2))
+f<-subset(nl_data("soil_fertility_p"),soil_class=="Loamy"); nl_structural_identify(grain_yield_Mg_ha~Asym-delta*exp(-k*P2O5_kg_ha),f,c(Asym=8,delta=5,k=.02))
+```
+
+# Process noise versus observation noise
+
+The optional `ctsmTMB` backend separates stochastic state evolution from measurement error. This is preferable to absorbing all temporal variation into an iid residual whenever process variability is scientifically meaningful.
+
+```{r ss, eval=FALSE}
+builder <- function(m){
+  m$addSystem(dx ~ theta*(mu-x)*dt + sigma_x*dw)
+  m$addObs(y ~ x)
+  m$setVariance(y ~ sigma_y^2)
+  m$setParameter(theta=c(initial=1,lower=.001,upper=20),mu=c(initial=1,lower=-10,upper=10),sigma_x=c(initial=.1,lower=1e-5,upper=5),sigma_y=.1)
+  m$setInitialState(list(mean=1,cov=.01)); m
+}
+# fit_soil <- nl_state_space(builder, soil_sensor_series)
+# fit_phys <- nl_state_space(builder, physiology_series)
+# fit_agro <- nl_state_space(builder, agronomy_series)
+# nl_error_decompose(fit_soil,"sigma_x","sigma_y")
+# nl_error_decompose(fit_phys,"sigma_x","sigma_y")
+# nl_error_decompose(fit_agro,"sigma_x","sigma_y")
+```
+
+## Method references
+
+The distinction between structural and practical identifiability follows the current review of @Heinrich2025.

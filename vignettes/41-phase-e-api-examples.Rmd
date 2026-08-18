@@ -1,0 +1,46 @@
+---
+title: "Phase E API: Three Cross-Domain Examples per Public Function"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Phase E API: Three Cross-Domain Examples per Public Function}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+This compact vignette provides an auditable third-example gate for the optional SciML API. All expensive backend calls are shown with `dry_run=TRUE` where appropriate.
+
+```{r api, eval=FALSE}
+nl_sciml_available(); nl_sciml_available(check_packages=TRUE); nl_sciml_available(julia="julia")
+nl_sciml_info(); subset(nl_sciml_info(),block<=70); subset(nl_sciml_info(),block>=71)
+nl_sciml_setup(FALSE); nl_sciml_setup(FALSE,env_dir=tempdir()); nl_sciml_setup(FALSE,julia="julia")
+
+crop<-nl_data("sciml_crop_growth"); c1<-subset(crop,plot_id==unique(plot_id)[1])
+fruit<-nl_data("sciml_fruit_growth"); f1<-subset(fruit,fruit_id==unique(fruit_id)[1])
+phys<-nl_data("sciml_physiology_dynamic"); p1<-subset(phys,plant_id==unique(plant_id)[1])
+fert<-nl_data("sciml_fertility_dynamic"); n1<-subset(fert,plot_id==unique(plot_id)[1])
+sw<-nl_data("sciml_soil_water")
+
+node1<-nl_neural_ode(c1,"day","biomass_g_m2",c("temperature_C","PAR_MJ_m2_d","soil_water_rel","nitrogen_rel"),dry_run=TRUE)
+node2<-nl_neural_ode(f1,"day_after_set","fruit_mass_g",c("temperature_C","soil_water_rel"),dry_run=TRUE)
+node3<-nl_neural_ode(p1,"hour",c("A_umol_CO2_m2_s","gs_mol_H2O_m2_s"),c("PAR_umol_m2_s","VPD_kPa","leaf_temperature_C","soil_water_rel"),dry_run=TRUE)
+
+ude1<-nl_ude(c1,"day","biomass_g_m2",c("temperature_C","PAR_MJ_m2_d","soil_water_rel","nitrogen_rel"),template="crop_growth_rue",known_parameters=c(RUE=2.8,Topt=26,Twidth=10,respiration=.01),dry_run=TRUE)
+ude2<-nl_ude(f1,"day_after_set","fruit_mass_g",c("temperature_C","soil_water_rel"),template="fruit_growth",known_parameters=c(r=.2,K=200),dry_run=TRUE)
+ude3<-nl_ude(n1,"day",c("plant_N_g_m2","soil_mineral_N_mg_kg"),c("temperature_C","soil_water_rel"),template="nitrogen_uptake",known_parameters=c(vmax=.08,Km=20),dry_run=TRUE)
+
+nl_pinn(sw,"richards_1d","day","theta_cm3_cm3",depth="depth_cm",covariates=c("rain_mm_d","ET0_mm_d"),parameters=c(theta_r=.06,theta_s=.46,alpha=.035,n=1.55,Ks=8),dry_run=TRUE)
+nl_pinn(c1,"logistic_growth","day","biomass_g_m2",parameters=c(r=.10,K=1200),dry_run=TRUE)
+nl_pinn(n1,"first_order_nutrient","day","plant_N_g_m2",parameters=c(k=.08,K=18),dry_run=TRUE)
+
+fake1<-structure(list(decomposition=data.frame(time=1:5,state="y",known=1:5,neural=c(.1,.2,.4,.2,.1),total=c(1.1,2.2,3.4,4.2,5.1))),class="nlr_ude")
+fake2<-structure(list(decomposition=data.frame(time=1:5,state="N",known=1,neural=c(.2,.4,.6,.2,.1),total=c(1.2,1.4,1.6,1.2,1.1))),class="nlr_ude")
+fake3<-structure(list(decomposition=data.frame(time=1:5,state="C",known=-.5,neural=c(.1,.2,.1,.05,.02),total=c(-.4,-.3,-.4,-.45,-.48))),class="nlr_ude")
+nl_missing_physics(fake1); nl_missing_physics(fake2,threshold=.2); nl_missing_physics(fake3,threshold=.3)
+
+nl_ude_discover(ude1,c("soil_water_rel","nitrogen_rel"),dry_run=TRUE); nl_ude_discover(ude2,c("fruit_mass_g","soil_water_rel"),dry_run=TRUE); nl_ude_discover(ude3,c("soil_mineral_N_mg_kg","soil_water_rel"),dry_run=TRUE)
+nl_sciml_diagnose(fake1); nl_sciml_diagnose(fake2); nl_sciml_diagnose(fake3)
+
+nl_dynamic_design(fake1,1:20,3); nl_dynamic_design(fake2,1:30,4,min_distance=2); nl_dynamic_design(fake3,seq(0,100,5),5)
+nl_control(ude1,"soil_water_rel",seq(0,98,14),.4,.95,"biomass_g_m2",dry_run=TRUE); nl_control(ude2,"soil_water_rel",seq(0,30,5),.45,.95,"fruit_mass_g",dry_run=TRUE); nl_control(ude3,"soil_water_rel",seq(0,84,14),.4,.95,"plant_N_g_m2",dry_run=TRUE)
+```

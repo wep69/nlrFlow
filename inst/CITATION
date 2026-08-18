@@ -1,0 +1,10 @@
+bibentry(
+  bibtype = "Manual",
+  title = "nlrFlow: Integrated Scientific Workflows for Nonlinear Regression in R",
+  author = c(
+    person("Walter Esfrain", "Pereira"),
+    person("Magali Haidee", "Pereira Martinez")
+  ),
+  year = "2026",
+  note = "R package version 0.3.0.9000"
+)

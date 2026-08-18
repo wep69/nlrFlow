@@ -1,0 +1,24 @@
+\name{nl_multistart}
+\alias{nl_multistart}
+\title{Multistart nonlinear least-squares search}
+\description{Fits the same nonlinear formula from many starting-value combinations through `nls.multstart`. A scalar `iter` performs shotgun or Latin-hypercube sampling; a vector `iter` requests a parameter grid. The winning fit is selected by the backend's AIC rule and is returned in the common `nlrfit` class.}
+\usage{nl_multistart(formula,data,start_lower,start_upper,iter=250,lhstype=c("shotgun","random","improved","maximin","genetic"),convergence_count=100,seed=20260817,...)}
+\arguments{
+  \item{formula}{Nonlinear model formula.}
+  \item{data}{Data frame.}
+  \item{start_lower}{Named lower bounds for starting values.}
+  \item{start_upper}{Named upper bounds for starting values.}
+  \item{iter}{Scalar number of sampled starts, or a vector defining a start grid.}
+  \item{lhstype}{Latin-hypercube strategy: `shotgun`, `random`, `improved`, `maximin`, or `genetic`.}
+  \item{convergence_count}{Number of consecutive undefeated fits before early stopping in scalar-iteration searches; use `FALSE` to evaluate all starts.}
+  \item{seed}{Random seed controlling sampled starting values.}
+  \item{...}{Additional arguments passed to `nls.multstart::nls_multstart` and ultimately `nlsLM`.}
+}
+\value{An `nlrfit` with engine `multistart`.}
+\examples{
+\dontrun{
+d <- nl_data("okra_growth_means"); nl_multistart(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))),d,c(Asym=12,k=.05,xmid=0),c(Asym=25,k=2,xmid=12),iter=100,lhstype="maximin")
+d <- subset(nl_data("soil_fertility_p"),soil_class=="Loamy"); nl_multistart(grain_yield_Mg_ha~Asym-delta*exp(-k*P2O5_kg_ha),d,c(Asym=4,delta=.1,k=.001),c(Asym=12,delta=10,k=.2),iter=100,lhstype="improved")
+d <- subset(nl_data("plant_physiology_light"),water_regime=="WellWatered"); nl_multistart(A_umol_CO2_m2_s~Amax*alpha*PAR_umol_m2_s/(Amax+alpha*PAR_umol_m2_s)-Rd,d,c(Amax=5,alpha=.005,Rd=0),c(Amax=60,alpha=.3,Rd=6),iter=c(4,4,4))
+}
+}

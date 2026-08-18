@@ -1,0 +1,21 @@
+---
+title: "Nonlinear mixed-effects models"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Nonlinear mixed-effects models}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(nlrFlow)
+```
+
+```{r eval=FALSE}
+a <- nl_data("agronomy_growth")
+# Fixed cultivar effects may act on nonlinear parameters; random effects preserve block/subject structure.
+nl_mixed(biomass_Mg_ha~Asym/(1+exp(-k*(day-xmid))),a,fixed=list(Asym~cultivar,k~cultivar,xmid~1),random=Asym~1|block,start=c(18,1,1,.09,.01,.01,52))
+nl_capabilities()
+nl_teach("logistic")
+```

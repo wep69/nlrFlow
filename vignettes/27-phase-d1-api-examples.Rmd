@@ -1,0 +1,56 @@
+---
+title: "Phase D1 API: Cross-Domain Examples"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Phase D1 API: Cross-Domain Examples}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+This vignette is an auditable index of three domain-distinct uses for each Phase D1 public function. Optional backends are intentionally not executed while building the vignette.
+
+```{r api, eval=FALSE}
+# Automatic differentiation: agronomy, soil, physiology
+nl_rtmb(obj_agro,par_agro); nl_rtmb(obj_soil,par_soil); nl_rtmb(obj_phys,par_phys)
+nl_ad(obj_agro,par_agro); nl_ad(obj_soil,par_soil); nl_ad(obj_phys,par_phys)
+nl_bayes_rtmb(m_agro,"optimize"); nl_bayes_rtmb(m_soil,"sample"); nl_bayes_rtmb(m_phys,"variational")
+nl_bayes_approx(m_agro,"laplace"); nl_bayes_approx(m_soil,"advi"); nl_bayes_approx(m_phys,"advi")
+
+# Quantile mixed: agronomy, physiology, soil
+nl_quantile_mixed(y_ag,x_ag,g_ag,ini_ag,expr_ag); nl_quantile_mixed(y_ph,x_ph,g_ph,ini_ph,expr_ph); nl_quantile_mixed(y_so,x_so,g_so,ini_so,expr_so)
+nl_quantile_mixed_robust(form_ag,d_ag,s_ag,"unit"); nl_quantile_mixed_robust(form_ph,d_ph,s_ph,"plant_id"); nl_quantile_mixed_robust(form_so,d_so,s_so,"unit")
+
+# Conformal: okra, fertility, soil physics
+nl_conformal(fit_okra); nl_conformal(fit_fert); nl_conformal(fit_infil)
+nl_conformal_group(fit_ag,"unit"); nl_conformal_group(fit_ph,"plant_id"); nl_conformal_group(fit_so,"unit")
+
+# Measurement error: sorption, physiology, fertility
+nl_measurement_error(form_sorp,d_sorp,s_sorp,"solution_P_mg_L",.05,10); nl_measurement_error(form_light,d_light,s_light,"PAR_umol_m2_s",10,1); nl_measurement_error(form_fert,d_fert,s_fert,"P2O5_kg_ha",2,.25)
+
+# Distributional and incomplete observations
+nl_mean_variance(form_okra,var_okra,d_okra,s_okra,v_okra); nl_mean_variance(form_sorp,var_sorp,d_sorp,s_sorp,v_sorp); nl_mean_variance(form_light,var_light,d_light,s_light,v_light)
+nl_censored(form_sorp,d_sorp,s_sorp,status_s,lo_s,up_s,10); nl_censored(form_fert,d_fert,s_fert,status_f,-Inf,Inf,.3); nl_censored(form_light,d_light,s_light,status_l,-Inf,Inf,1)
+nl_truncated(form_okra,d_okra,s_okra,0,Inf,.5); nl_truncated(form_fert,d_fert,s_fert,0,Inf,.3); nl_truncated(form_light,d_light,s_light,-5,Inf,1)
+
+# Identifiability and sensitivity
+nl_structural_identify(form_okra,d_okra,s_okra); nl_structural_identify(form_sorp,d_sorp,s_sorp); nl_structural_identify(form_fert,d_fert,s_fert)
+nl_sensitivity(fun_growth,r_growth,"local"); nl_sensitivity(fun_sorp,r_sorp,"morris"); nl_sensitivity(fun_light,r_light,"sobol")
+
+# Optimal design
+nl_design(form_okra,t_okra,s_okra,"day_after_flowering",1:25,6); nl_design(form_fert,t_fert,s_fert,"P2O5_kg_ha",seq(0,300,10),7); nl_design(form_light,t_light,s_light,"PAR_umol_m2_s",seq(0,2000,100),7)
+nl_next_measurement(form_okra,t_okra,s_okra,"day_after_flowering",1:25,existing_okra); nl_next_measurement(form_fert,t_fert,s_fert,"P2O5_kg_ha",cand_fert,existing_fert); nl_next_measurement(form_light,t_light,s_light,"PAR_umol_m2_s",cand_light,existing_light)
+
+# Stochastic state models
+nl_state_space(builder,soil_ts); nl_state_space(builder,phys_ts); nl_state_space(builder,agro_ts)
+nl_error_decompose(ss_soil,"sigma_x","sigma_y"); nl_error_decompose(ss_phys,"sigma_x","sigma_y"); nl_error_decompose(ss_ag,"sigma_x","sigma_y")
+
+# GP discrepancy and emulation
+nl_gp_discrepancy(fit_okra,"day_after_flowering"); nl_gp_discrepancy(fit_fert,"P2O5_kg_ha"); nl_gp_discrepancy(fit_ret,"pressure_head_kPa")
+nl_surrogate(X_okra,y_okra,"quadratic"); nl_surrogate(X_sorp,y_sorp,"gp"); nl_surrogate(X_light,y_light,"gp")
+nl_surrogate_validate(su_okra,Xv_okra,yv_okra); nl_surrogate_validate(su_sorp,Xv_sorp,yv_sorp); nl_surrogate_validate(su_light,Xv_light,yv_light)
+
+# Cubature and ABC
+nl_propagate(b_ok,V_ok,fun_ok); nl_propagate(b_so,V_so,fun_so); nl_propagate(b_ph,V_ph,fun_ph)
+nl_abc(obs1,sim1,prior1,sum1); nl_abc(obs2,sim2,prior2,sum2); nl_abc(obs3,sim3,prior3,sum3)
+```

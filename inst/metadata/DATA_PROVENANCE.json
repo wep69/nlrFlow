@@ -1,0 +1,55 @@
+{
+  "okra_growth_raw": {
+    "source": "User-provided R script /mnt/data/Regressao_nao_linear.R",
+    "rows": 530,
+    "status": "transcribed without changing numeric values"
+  },
+  "other_datasets": {
+    "source": "Frozen simulations created for nlrFlow teaching",
+    "seed": 20260817,
+    "status": "simulated; not empirical claims"
+  },
+  "soil_water_retention": {
+    "type": "simulated",
+    "domain": "soil physics",
+    "seed": 20260817,
+    "description": "Frozen van Genuchten water-retention example with texture and soil-core hierarchy; pressure head is stored as positive magnitude in kPa."
+  },
+  "soil_p_sorption": {
+    "type": "simulated",
+    "domain": "soil chemistry/fertility",
+    "seed": 20260817,
+    "description": "Frozen Langmuir phosphorus-sorption example with soil class and sample hierarchy."
+  },
+  "sciml_teaching_datasets": {
+    "source": "Frozen simulations created for nlrFlow Phase E (blocks 68-74) teaching and software tests",
+    "seed": 20260817,
+    "status": "simulated; not empirical claims; values are pedagogical and must not be interpreted as measured agronomic results",
+    "datasets": {
+      "sciml_crop_growth": {
+        "domain": "agronomy / crop growth",
+        "purpose": "Neural ODE and UDE trajectories with genotype and water-regime context"
+      },
+      "sciml_fruit_growth": {
+        "domain": "fruit growth",
+        "purpose": "Neural ODE/UDE examples with irregular individual trajectories"
+      },
+      "sciml_soil_water": {
+        "domain": "soil physics / vadose-zone water",
+        "purpose": "PINN/Richards-equation and dynamic sensor-design examples"
+      },
+      "sciml_fertility_dynamic": {
+        "domain": "soil fertility / plant nutrition",
+        "purpose": "UDE missing-physics examples for mineral N, plant N and biomass"
+      },
+      "sciml_physiology_dynamic": {
+        "domain": "plant physiology",
+        "purpose": "dynamic photosynthesis and stomatal-conductance examples"
+      },
+      "sciml_irrigation_horizon": {
+        "domain": "irrigation / fertigation",
+        "purpose": "dynamic design and bounded control examples"
+      }
+    }
+  }
+}

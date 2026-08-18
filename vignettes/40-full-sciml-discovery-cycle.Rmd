@@ -1,0 +1,122 @@
+---
+title: "Complete Scientific Discovery Cycle: UDE to the Next Experiment"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Complete Scientific Discovery Cycle: UDE to the Next Experiment}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+```
+
+# Objective
+
+This vignette demonstrates the intended research cycle for blocks 68--74. The cycle is not “train a neural network and report a smaller RMSE.” It is:
+
+\[
+\text{experiment}\rightarrow\text{known mechanism}\rightarrow\text{UDE}\rightarrow\text{missing physics}
+\rightarrow\text{symbolic hypothesis}\rightarrow\text{validation}\rightarrow\text{next experiment}.
+\]
+
+The workflow combines the UDE philosophy [@Rackauckas2020UDE], symbolic regression [@Cranmer2023], and sequential experimental design [@Ghosh2026PICS].
+
+# Step 0. Check the optional backend
+
+```{r backend, eval=FALSE}
+nl_sciml_available()
+nl_sciml_info()
+nl_sciml_setup(install=FALSE)
+```
+
+Installation is explicit. `nlrFlow` never installs Julia silently.
+
+# Step 1. Start from an agronomic question
+
+Use crop biomass as the example. The working hypothesis is that a radiation-use-efficiency growth component explains most dynamics, while water and nitrogen interactions may contain a reproducible missing component.
+
+```{r data, eval=FALSE}
+crop <- nl_data("sciml_crop_growth")
+d <- subset(crop,plot_id==unique(plot_id)[1])
+```
+
+# Step 2. Fit a fully neural dynamic benchmark
+
+```{r node, eval=FALSE}
+node <- nl_neural_ode(d,"day","biomass_g_m2",c("temperature_C","PAR_MJ_m2_d","soil_water_rel","nitrogen_rel"),seed=601,maxiters=1200)
+nl_sciml_diagnose(node)
+```
+
+# Step 3. Fit the UDE
+
+```{r ude, eval=FALSE}
+ude <- nl_ude(d,"day","biomass_g_m2",c("temperature_C","PAR_MJ_m2_d","soil_water_rel","nitrogen_rel"),template="crop_growth_rue",known_parameters=c(RUE=2.8,Topt=26,Twidth=10,respiration=.01),seed=602,maxiters=1500)
+miss <- nl_missing_physics(ude,state="biomass_g_m2",threshold=.20)
+nl_plot(ude)
+nl_plot(miss)
+```
+
+# Step 4. Ask whether the learned term is stable
+
+```{r diagnosis, eval=FALSE}
+diag <- nl_sciml_diagnose(ude)
+nl_table(diag)
+```
+
+If the neural term dominates everywhere or changes qualitatively across seeds, stop and revise the known model or data design.
+
+# Step 5. Convert missing dynamics to interpretable hypotheses
+
+```{r symbolic, eval=FALSE}
+sym <- nl_ude_discover(ude,c("soil_water_rel","nitrogen_rel","temperature_C","biomass_g_m2"),state="biomass_g_m2",niterations=500)
+nl_plot(sym)
+nl_table(sym)
+```
+
+The Pareto frontier should be screened for dimensional coherence, signs, asymptotic behavior, biological plausibility, and complexity. Candidate equations must then be refitted as ordinary scientific models so their parameters and uncertainty can be evaluated directly. A practical refit pattern is shown next; the formula is a representative reparameterization of a water × nitrogen correction, not an assertion that a particular symbolic run must return it.
+
+```{r candidate-refit, eval=FALSE}
+candidate_formula <- biomass_g_m2 ~
+ A*(1-exp(-k*day))*(1+bW*(soil_water_rel-.8)+bN*(nitrogen_rel-.8))
+refit <- nl_discover(
+ d,"biomass_g_m2","day",models=c("gompertz"),
+ candidate_formulas=list(ude_candidate=candidate_formula),
+ candidate_starts=list(ude_candidate=c(A=1000,k=.04,bW=.5,bN=.5)),
+ constraints=list(positive=TRUE),engine="nlsLM",k=5
+)
+validation <- nl_validate_candidate(refit$fits$ude_candidate,"day",list(positive=TRUE),k=5)
+discrimination <- nl_discriminate(refit,"day",constraints=list(positive=TRUE),k=5)
+nl_table(validation)
+nl_table(discrimination)
+```
+
+# Step 6. Design a discriminating next experiment
+
+```{r design, eval=FALSE}
+des <- nl_dynamic_design(list(node,ude),candidates=seq(0,98,2),n_points=5,criterion="discrimination",min_distance=7)
+nl_plot(des)
+nl_table(des)
+```
+
+A new observation is most useful when it answers a scientific ambiguity, not merely when the current model predicts high variance.
+
+# Step 7. Optional control experiment
+
+```{r control, eval=FALSE}
+ctl <- nl_control(ude,"soil_water_rel",seq(0,98,14),.4,.95,"biomass_g_m2",input_penalty=.01,maxiters=250)
+nl_plot(ctl)
+nl_table(ctl)
+ctl$summary
+```
+
+A dynamic control result should be treated as a hypothesis for a controlled field experiment. It is not a direct management recommendation.
+
+# Step 8. Publication outputs
+
+The final publication package should include: observed and fitted trajectories; UDE known/neural decomposition; training/physics diagnostics; symbolic error-complexity Pareto plot; candidate-equation validation table; next-measurement design plot; and, if relevant, a bounded control schedule. Export figures with `nl_save_plot()` to SVG/PDF or high-resolution TIFF and tables with `nl_table()`.
+
+# Failure modes that invalidate the discovery claim
+
+A discovery claim is not justified if the learned term is seed-unstable, the candidate equation is not refitted, the candidate fails extrapolation or an independent experiment, the known model is obviously misspecified, physical units are inconsistent, or the new experiment does not distinguish the proposed mechanism from plausible alternatives.

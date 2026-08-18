@@ -1,0 +1,103 @@
+---
+title: "Soil fertility: nutrient-response curves, plateaus, soil classes, and uncertainty"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Soil fertility: nutrient-response curves, plateaus, soil classes, and uncertainty}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(nlrFlow)
+```
+
+## Data and scientific question
+
+The frozen dataset represents grain-yield response to P2O5 in three soil classes with blocks. It is simulated and should be used only for methodological teaching.
+
+```{r}
+fert <- nl_data("soil_fertility_p")
+nl_audit(fert, "grain_yield_Mg_ha", "P2O5_kg_ha", c("soil_class", "block"))
+loam <- subset(fert, soil_class == "Loamy")
+```
+
+## Competing response forms
+
+```{r}
+mods <- nl_fit_many(
+  loam, "grain_yield_Mg_ha", "P2O5_kg_ha",
+  c("mitscherlich", "michaelis_menten", "linear_plateau", "quadratic_plateau", "emax"),
+  engine = "nlsLM"
+)
+nl_compare(mods)
+best <- nl_select(mods)
+```
+
+Plateau models answer a different biological question from smooth asymptotic functions. Model choice should therefore combine mechanism, experimental dose coverage, diagnostics, uncertainty and predictive behavior.
+
+## Derived fertilizer-response quantities
+
+```{r}
+der <- nl_derive(best)
+# nl_confregion(best, n = 2000)
+der$summary
+```
+
+For a nutrient-response model, derivative summaries can identify where marginal response becomes small. They are not, by themselves, an economic optimum. Fertilizer price, product value and agronomic constraints are required for an economic recommendation.
+
+## Bootstrap intervals and prediction bands
+
+```{r, eval=FALSE}
+b <- nl_boot(best, R = 3000, type = "case", seed = 20260817)
+nl_confint(best, "bootstrap", boot = b, bootstrap_interval = "bca")
+nl_predict(best, interval = "prediction", nsim = 5000, seed = 20260817)
+nl_derive(best, boot = b)
+```
+
+## Soil class as a qualitative modifier of curve parameters
+
+A joint nonlinear model can test whether soil classes differ in response plateau, curvature or effective-dose parameter.
+
+```{r, eval=FALSE}
+g <- nl_fit(
+  grain_yield_Mg_ha ~ Asym - delta*exp(-k*P2O5_kg_ha),
+  data = fert,
+  start = c(7.5, 0.8, 1.4, 5, 0.5, 0.5, 0.025),
+  engine = "gnls",
+  params = list(Asym ~ soil_class, delta ~ soil_class, k ~ 1),
+  weights = nlme::varPower(form = ~ fitted(.))
+)
+summary(g)
+```
+
+The fixed-effect start vector must follow the coefficient order of the parameter model actually specified. In a new dataset, inspect the design matrix and starting estimates rather than copying these values mechanically.
+
+## Resistant sensitivity analysis
+
+```{r, eval=FALSE}
+r <- nl_robust(
+  grain_yield_Mg_ha ~ Asym - delta*exp(-k*P2O5_kg_ha),
+  loam,
+  start = list(Asym = 8, delta = 5, k = 0.025)
+)
+coef(best)
+coef(r)
+# Compare fitted trajectories and parameter sensitivity directly; do not interpret
+# AIC weights across fundamentally different robust and least-squares objectives.
+```
+
+The resistant fit is a sensitivity analysis when influential observations are scientifically plausible. Outliers should not be removed merely because a resistant estimator gives a cleaner curve, and information criteria from different estimation objectives should not be treated as directly exchangeable.
+
+## Publication-ready output
+
+```{r, eval=FALSE}
+p <- nl_plot(best, interval = "confidence")
+nl_save_plot(p, "P_response_loamy_soil.tiff", 180, 120, "mm", 600)
+nl_table(best, "parameters", "gt")
+```
+
+```{r, eval=FALSE}
+# Global-search fallback for a difficult nutrient-response initialization
+nl_global_start(grain_yield_Mg_ha~Asym-delta*exp(-k*P2O5_kg_ha), loam, c(Asym=3,delta=.01,k=.0001), c(Asym=15,delta=12,k=.5), pop_size=60, maxiter=300, run=50)
+```

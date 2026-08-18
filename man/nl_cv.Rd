@@ -1,0 +1,16 @@
+\name{nl_cv}
+\alias{nl_cv}
+\title{K-fold predictive cross-validation}
+\description{Refits a nonlinear model across deterministic K-fold splits and returns prediction errors.}
+\usage{nl_cv(object,k=5,seed=20260817)}
+\arguments{
+  \item{object}{An `nlrfit` object.}
+  \item{k}{Number of folds.}
+  \item{seed}{Random seed for fold allocation.}
+}
+\value{A list with fold metrics and aggregate RMSE/MAE.}
+\examples{
+f <- nl_fit(data=nl_data("okra_growth_means"),model="gompertz",response="fruit_length",predictor="day_after_flowering",engine="nls"); nl_cv(f,k=3)
+f <- nl_fit(data=subset(nl_data("soil_fertility_p"),soil_class=="Loamy"),model="mitscherlich",response="grain_yield_Mg_ha",predictor="P2O5_kg_ha",engine="nls"); nl_cv(f,k=4)
+f <- nl_fit(data=subset(nl_data("soil_infiltration"),management=="NoTill"),model="michaelis_menten",response="cumulative_infiltration_mm",predictor="time_min",engine="nls"); nl_cv(f,k=5)
+}

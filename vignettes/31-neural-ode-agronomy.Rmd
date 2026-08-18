@@ -1,0 +1,92 @@
+---
+title: "Neural ODEs for Agronomic Dynamics"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Neural ODEs for Agronomic Dynamics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+```
+
+# Scientific question
+
+A Neural ODE replaces the complete right-hand side of an ordinary differential equation by a trainable neural network. In `nlrFlow` it is reserved for continuous-time processes for which the rate law is poorly known and a conventional interpretable equation is demonstrably inadequate. It should not replace Richards, Gompertz, Mitscherlich, van Genuchten, or another mechanistically defensible model merely because a neural model is available.
+
+The workflow implemented by `nl_neural_ode()` uses Julia/SciML as an optional backend. The R object stores the complete specification, training history, fitted trajectory, model artifact, seed, and input data needed for audit and downstream publication outputs. Neural ODEs follow the differentiable differential-equation framework represented in the SciML ecosystem and the broader neural differential equation literature [@Chen2018NeuralODE].
+
+# 1. Crop biomass and environmental forcing
+
+The synthetic teaching dataset represents repeated biomass trajectories under changing temperature, radiation, relative soil water, and nitrogen status. Keep one experimental unit per dynamic fit unless the model specification explicitly includes hierarchical structure.
+
+```{r crop, eval=FALSE}
+crop <- nl_data("sciml_crop_growth")
+plot1 <- subset(crop, plot_id == unique(plot_id)[1])
+
+fit_crop <- nl_neural_ode(
+  data = plot1,
+  time = "day",
+  states = "biomass_g_m2",
+  covariates = c("temperature_C", "PAR_MJ_m2_d", "soil_water_rel", "nitrogen_rel"),
+  hidden = c(16, 16),
+  activation = "tanh",
+  seed = 20260817,
+  maxiters = 1500
+)
+
+p_crop <- nl_plot(fit_crop)
+t_crop <- nl_table(fit_crop)
+nl_save_plot(p_crop, "neural_ode_crop.svg", width=180, height=120)
+```
+
+The principal table should be read as a trajectory-fit summary, not as a table of biologically meaningful neural-network weights. Practical interpretation should focus on predictive adequacy, interpolation/extrapolation support, sensitivity, and comparison with a simpler mechanistic model.
+
+# 2. Fruit growth with irregular observations
+
+```{r fruit, eval=FALSE}
+fruit <- nl_data("sciml_fruit_growth")
+f1 <- subset(fruit, fruit_id == unique(fruit_id)[1])
+
+fit_fruit <- nl_neural_ode(
+  f1, "day_after_set", "fruit_mass_g",
+  covariates = c("temperature_C", "soil_water_rel"),
+  hidden = c(12,12), seed=20260818, maxiters=1200
+)
+nl_plot(fit_fruit)
+nl_table(fit_fruit)
+```
+
+For fruit growth, compare the Neural ODE against Richards or Gompertz before accepting the added complexity. A Neural ODE is most defensible when environmental forcing produces dynamic departures that a time-only sigmoidal curve cannot represent.
+
+# 3. Plant physiology as a multistate system
+
+```{r physiology, eval=FALSE}
+phys <- nl_data("sciml_physiology_dynamic")
+p1 <- subset(phys, plant_id == unique(plant_id)[1])
+fit_phys <- nl_neural_ode(
+  p1, "hour", c("A_umol_CO2_m2_s", "gs_mol_H2O_m2_s"),
+  covariates=c("PAR_umol_m2_s","VPD_kPa","leaf_temperature_C","soil_water_rel"),
+  hidden=c(20,20), seed=20260819, maxiters=1500
+)
+nl_plot(fit_phys)
+nl_table(fit_phys)
+```
+
+A multistate Neural ODE can represent coupled dynamics, but it does not by itself identify causal physiological mechanisms. Treat the learned derivative as a flexible dynamic approximation unless the model is subsequently constrained or converted to an interpretable mechanistic hypothesis.
+
+# Complete interpretation cycle
+
+1. Audit time support, missingness, replication, and the experimental unit.
+2. Fit a simple mechanistic or parametric comparator.
+3. Fit the Neural ODE with a frozen seed.
+4. Inspect training and validation diagnostics with `nl_sciml_diagnose()`.
+5. Plot observed and predicted states using `nl_plot()`.
+6. Test extrapolation rather than reporting training loss alone.
+7. Use UDE rather than Neural ODE when important process knowledge is available.
+
+# When not to use this module
+
+Do not use Neural ODEs for a small single-curve dataset when an interpretable three- or four-parameter model fits adequately, when there is no dynamic scientific question, or when the data cannot constrain a high-flexibility derivative.

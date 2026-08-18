@@ -1,0 +1,48 @@
+---
+title: "State of the art and ecosystem rationale"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{State of the art and ecosystem rationale}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(nlrFlow)
+```
+
+`nlrFlow` is an orchestration and validation layer. Classical and specialized estimators remain attributable to their numerical backends. The 45-67 expansion adds methods that change the scientific workflow rather than merely adding alternative optimizers.
+
+## Automatic differentiation and latent structures
+
+RTMB provides an R-native path to TMB automatic differentiation and Laplace methods [@Kristensen2016TMB; @RTMB2026]. `BayesRTMB` extends the same model infrastructure to Bayesian workflows [@BayesRTMB2026]. `nl_rtmb()`, `nl_ad()`, and `nl_bayes_rtmb()` expose these paths only when a custom likelihood or latent structure warrants them.
+
+## Distributional and hierarchical inference
+
+Nonlinear mixed quantiles are routed to `qrNLMM` [@qrNLMM2025], based on likelihood/SAEM methodology [@Galarza2020]. The cGAL model of @Burger2025 is documented as a benchmark; the package's experimental resistant mixed-quantile sensitivity estimator is not represented as that method. Joint mean-variance modelling and measurement-error extensions are motivated by recent longitudinal nonlinear work [@Zhang2024; @Ye2025].
+
+## Identifiability, sensitivity and experimental design
+
+Structural and practical identifiability are kept conceptually separate [@Heinrich2025]. Global sensitivity is supported alongside the Julia ecosystem represented by `GlobalSensitivity.jl` [@Dixit2022]. Local optimal design and sequential selection are interpreted in the context of recent nonlinear design developments [@BubelDesign2025; @Ghosh2026PICS].
+
+## Prediction uncertainty
+
+Conformal prediction provides a distribution-light complement to Wald/profile/bootstrap/posterior intervals [@Cordier2023MAPIE; @Randahl2026; @pintervals2026]. Deterministic propagation is provided as a transparent approximation, while the sparse-cubature work of @BubelCubature2025 is documented as a more specialized research direction.
+
+## Stochastic state-space models
+
+Continuous-time stochastic state-space models are delegated to `ctsmTMB` [@ctsmTMB2026], preserving explicit process and observation equations and separating process uncertainty from measurement uncertainty.
+
+## Knowledge-guided equation discovery
+
+PySR/SymbolicRegression.jl provides an interpretable symbolic-regression ecosystem [@Cranmer2023]. The package follows the knowledge-guided principle that equations proposed by symbolic search must be validated, discriminated and used to design informative new experiments rather than accepted automatically [@Rogers2024].
+
+```{r}
+nl_capabilities()
+nl_models()
+nl_doctor()
+```
+
+The complete current ecosystem review is in `STATE_OF_THE_ART.md`; machine-readable metadata are supplied with the source snapshot.

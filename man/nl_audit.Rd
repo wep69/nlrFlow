@@ -1,0 +1,23 @@
+\name{nl_audit}
+\alias{nl_audit}
+\title{Audit data for nonlinear regression}
+\description{Inspects missingness, replication, predictor coverage, response support, grouping variables, and potential scale/outlier flags before model fitting.}
+\usage{nl_audit(data, response, predictor, group = NULL)}
+\arguments{
+  \item{data}{A data frame.}
+  \item{response}{Response column name.}
+  \item{predictor}{Primary numeric predictor column name.}
+  \item{group}{Optional grouping variable or variables.}
+}
+\value{An object of class `nlr_audit` containing summaries, warnings, and an audit trail.}
+\examples{
+# Example 1: okra fruit growth
+okra <- nl_data("okra_growth_means")
+# Example 2: soil fertility
+fert <- nl_data("soil_fertility_p")
+# Example 3: plant physiology
+phys <- nl_data("plant_physiology_light")
+nl_audit(okra, "fruit_length", "day_after_flowering")
+nl_audit(fert, "grain_yield_Mg_ha", "P2O5_kg_ha", "soil_class")
+nl_audit(phys, "A_umol_CO2_m2_s", "PAR_umol_m2_s", "water_regime")
+}

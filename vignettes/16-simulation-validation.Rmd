@@ -1,0 +1,20 @@
+---
+title: "Simulation and validation framework"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Simulation and validation framework}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(nlrFlow)
+```
+
+```{r}
+s1 <- nl_simulate("gompertz",1:25,c(Asym=18,k=.44,xmid=3.7),sigma=.5,seed=1)
+s2 <- nl_simulate("mitscherlich",c(0,30,60,90,120,180),c(Asym=8,delta=5,k=.025),sigma=.25,seed=2)
+s3 <- nl_simulate("rectangular_hyperbola",c(0,100,300,600,1000),c(Amax=30,alpha=.07,Rd=1.2),sigma=.6,seed=3)
+head(s1); head(s2); head(s3)
+```

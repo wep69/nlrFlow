@@ -1,0 +1,54 @@
+---
+title: "Distributional Nonlinear Regression: Quantiles, Variance, Censoring and Truncation"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Distributional Nonlinear Regression: Quantiles, Variance, Censoring and Truncation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+```
+
+`nl_quantile_mixed()` exposes the SAEM implementation in `qrNLMM` for nonlinear mixed-effects quantile regression. It is useful when treatment differences occur in lower or upper conditional quantiles rather than only in the conditional mean.
+
+```{r qnlmm, eval=FALSE}
+a <- nl_data("agronomy_growth"); nl_quantile_mixed(a$biomass_Mg_ha,a$day,interaction(a$cultivar,a$block,drop=TRUE),initial,exprNL,tau=c(.1,.5,.9))
+p <- nl_data("plant_physiology_light"); nl_quantile_mixed(p$A_umol_CO2_m2_s,p$PAR_umol_m2_s,p$plant_id,initial,exprNL,tau=.5)
+s <- nl_data("soil_infiltration"); nl_quantile_mixed(s$cumulative_infiltration_mm,s$time_min,interaction(s$management,s$block,drop=TRUE),initial,exprNL,tau=.9)
+```
+
+The experimental `nl_quantile_mixed_robust()` is deliberately labeled a sensitivity estimator. Its smooth pinball objective has linear tails and penalized group-specific parameter deviations, but it is not claimed to reproduce the contaminated generalized asymmetric Laplace model from the recent literature.
+
+```{r rqmix, eval=FALSE}
+a$unit <- interaction(a$cultivar,a$block,drop=TRUE); nl_quantile_mixed_robust(biomass_Mg_ha~Asym/(1+exp(-k*(day-xmid))),a,c(Asym=18,k=.08,xmid=50),"unit",c("Asym","k"))
+nl_quantile_mixed_robust(A_umol_CO2_m2_s~Amax*alpha*PAR_umol_m2_s/(Amax+alpha*PAR_umol_m2_s)-Rd,p,c(Amax=30,alpha=.06,Rd=1),"plant_id",c("Amax"))
+s$unit <- interaction(s$management,s$block,drop=TRUE); nl_quantile_mixed_robust(cumulative_infiltration_mm~Vmax*time_min/(Km+time_min),s,c(Vmax=140,Km=30),"unit",c("Vmax"),tau=.9)
+```
+
+# Joint mean and variance
+
+```{r mv, eval=FALSE}
+o <- nl_data("okra_growth_raw"); nl_mean_variance(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))),~g0+g1*log(pmax(.mu,1e-4)),o,c(Asym=18,k=.4,xmid=4),c(g0=-1,g1=.3))
+sp <- subset(nl_data("soil_p_sorption"),soil_class=="Clayey"); nl_mean_variance(sorbed_P_mg_kg~qmax*K*solution_P_mg_L/(1+K*solution_P_mg_L),~g0+g1*log1p(.mu),sp,c(qmax=600,K=.2),c(g0=1,g1=.1))
+nl_mean_variance(A_umol_CO2_m2_s~Amax*alpha*PAR_umol_m2_s/(Amax+alpha*PAR_umol_m2_s)-Rd,~g0+g1*sqrt(abs(.mu)),p,c(Amax=30,alpha=.06,Rd=1),c(g0=-.2,g1=.03))
+```
+
+# Censoring and truncation
+
+```{r cens, eval=FALSE}
+sp$status <- "none"; sp$lo <- sp$sorbed_P_mg_kg; sp$up <- sp$sorbed_P_mg_kg
+nl_censored(sorbed_P_mg_kg~qmax*K*solution_P_mg_L/(1+K*solution_P_mg_L),sp,c(qmax=600,K=.2),"status","lo","up",10)
+f <- subset(nl_data("soil_fertility_p"),soil_class=="Loamy"); f$status<-"none"; nl_censored(grain_yield_Mg_ha~Asym-delta*exp(-k*P2O5_kg_ha),f,c(Asym=8,delta=5,k=.02),f$status,-Inf,Inf,.3)
+p$status<-"none"; nl_censored(A_umol_CO2_m2_s~Amax*alpha*PAR_umol_m2_s/(Amax+alpha*PAR_umol_m2_s)-Rd,p,c(Amax=30,alpha=.06,Rd=1),p$status,-Inf,Inf,1)
+
+o2<-nl_data("okra_growth_means"); nl_truncated(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))),o2,c(Asym=18,k=.4,xmid=4),0,Inf,.5)
+nl_truncated(grain_yield_Mg_ha~Asym-delta*exp(-k*P2O5_kg_ha),f,c(Asym=8,delta=5,k=.02),0,Inf,.3)
+nl_truncated(A_umol_CO2_m2_s~Amax*alpha*PAR_umol_m2_s/(Amax+alpha*PAR_umol_m2_s)-Rd,p,c(Amax=30,alpha=.06,Rd=1),-5,Inf,1)
+```
+
+## Method references
+
+Likelihood-based nonlinear mixed quantiles follow @Galarza2020. The resistant cGAL development of @Burger2025 is a benchmark only and is not claimed as the implementation behind `nl_quantile_mixed_robust()`.

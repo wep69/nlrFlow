@@ -1,0 +1,96 @@
+---
+title: "From UDE Corrections to Symbolic Agronomic Hypotheses"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{From UDE Corrections to Symbolic Agronomic Hypotheses}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+```
+
+# Purpose
+
+A neural correction is difficult to communicate biologically. `nl_ude_discover()` samples the learned UDE correction and passes it to `SymbolicRegression.jl`, producing a Pareto set of candidate expressions that trade prediction loss against equation complexity. The scientific workflow then returns to the existing `nlrFlow` candidate-validation and model-discrimination tools. This is hypothesis generation, not automatic proof of mechanism. Symbolic regression and UDE-based missing-physics discovery are motivated by current Scientific Machine Learning workflows [@Cranmer2023; @Rackauckas2020UDE].
+
+# 1. Crop-growth correction
+
+```{r crop, eval=FALSE}
+crop <- nl_data("sciml_crop_growth")
+c1 <- subset(crop,plot_id==unique(plot_id)[1])
+ude_c <- nl_ude(c1,"day","biomass_g_m2",
+ c("temperature_C","PAR_MJ_m2_d","soil_water_rel","nitrogen_rel"),
+ template="crop_growth_rue",known_parameters=c(RUE=2.8,Topt=26,Twidth=10,respiration=.01),seed=101)
+
+disc_c <- nl_ude_discover(
+  ude_c,
+  predictors=c("soil_water_rel","nitrogen_rel","temperature_C","biomass_g_m2"),
+  state="biomass_g_m2", niterations=400
+)
+nl_plot(disc_c)
+nl_table(disc_c)
+```
+
+Select candidates from the Pareto frontier only after checking units, signs, shape, parameter interpretation, and behavior outside the calibration domain.
+
+# 2. Nitrogen dynamics
+
+```{r n, eval=FALSE}
+fert <- nl_data("sciml_fertility_dynamic")
+f1 <- subset(fert,plot_id==unique(plot_id)[1])
+ude_n <- nl_ude(f1,"day",c("plant_N_g_m2","soil_mineral_N_mg_kg"),c("temperature_C","soil_water_rel"),template="nitrogen_uptake",known_parameters=c(vmax=.08,Km=20),seed=102)
+disc_n <- nl_ude_discover(ude_n,c("soil_mineral_N_mg_kg","soil_water_rel","temperature_C"),state="plant_N_g_m2",niterations=300)
+nl_table(disc_n)
+```
+
+# 3. Fruit growth
+
+```{r fruit, eval=FALSE}
+fruit <- nl_data("sciml_fruit_growth")
+f1 <- subset(fruit,fruit_id==unique(fruit_id)[1])
+ude_f <- nl_ude(f1,"day_after_set","fruit_mass_g",c("temperature_C","soil_water_rel"),template="fruit_growth",known_parameters=c(r=.2,K=200),seed=103)
+disc_f <- nl_ude_discover(ude_f,c("fruit_mass_g","temperature_C","soil_water_rel"),state="fruit_mass_g",niterations=300)
+nl_plot(disc_f)
+```
+
+# Validate rather than celebrate the equation
+
+A candidate discovered from the neural term should be re-expressed as an explicit scientific model and then assessed with the existing framework:
+
+After inspecting the symbolic Pareto frontier, rewrite a selected expression into a parameterized, dimensionally interpretable scientific model. The example below illustrates the refitting step with a multiplicative water × nitrogen correction. It is a **representative reparameterization**, not a claim that every symbolic run will return this exact equation.
+
+```{r validation, eval=FALSE}
+candidate_formula <- biomass_g_m2 ~
+  A * (1 - exp(-k * day)) *
+  (1 + bW * (soil_water_rel - 0.8) + bN * (nitrogen_rel - 0.8))
+
+discovery_refit <- nl_discover(
+  data=c1, response="biomass_g_m2", predictor="day",
+  models=c("gompertz"),
+  candidate_formulas=list(ude_candidate=candidate_formula),
+  candidate_starts=list(ude_candidate=c(A=1000,k=.04,bW=.5,bN=.5)),
+  constraints=list(positive=TRUE), engine="nlsLM", k=5
+)
+
+candidate_fit <- discovery_refit$fits$ude_candidate
+validation <- nl_validate_candidate(
+  candidate_fit, "day",
+  constraints=list(positive=TRUE), extrapolation=.10, k=5
+)
+cv <- nl_cv(candidate_fit,k=5)
+boot <- nl_boot(candidate_fit,R=500,seed=20260817)
+discrimination <- nl_discriminate(discovery_refit,"day",constraints=list(positive=TRUE),k=5)
+
+nl_table(validation)
+nl_table(discrimination)
+nl_plot(validation)
+```
+
+A useful discovery is one that survives refitting, validation, new experiments, and mechanistic scrutiny.
+
+## Reproducibility of the symbolic search
+
+By default, `nl_ude_discover()` requests serial, deterministic `SymbolicRegression.jl` search and forwards the R-side seed to Julia. This prioritizes reproducibility for a scientific discovery workflow. For larger exploratory searches, `parallelism = "multithreading", deterministic = FALSE` may be used, but candidate stability should then be assessed across independent seeds before biological interpretation.

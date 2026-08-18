@@ -1,0 +1,21 @@
+---
+title: "Bootstrap and nonlinear uncertainty"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Bootstrap and nonlinear uncertainty}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(nlrFlow)
+```
+
+```{r}
+okra <- nl_data("okra_growth_means")
+f <- nl_fit(data=okra,model="gompertz",response="fruit_length",predictor="day_after_flowering",engine="nls")
+b <- nl_boot(f,R=50,type="residual",seed=10)
+nl_confint(f,"bootstrap",boot=b)
+nl_predict(f,interval="confidence",boot=b)
+```

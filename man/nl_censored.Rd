@@ -1,0 +1,23 @@
+\name{nl_censored}
+\alias{nl_censored}
+\title{Censored nonlinear Gaussian regression}
+\description{Fits nonlinear regression without substituting arbitrary values for left-, right- or interval-censored observations. Censoring contributions are entered through the appropriate Gaussian CDF probabilities.}
+\usage{nl_censored(formula,data,start,status,lower=-Inf,upper=Inf,sigma_start=1, control=list(maxit=5000))}
+\arguments{
+  \item{formula}{Nonlinear mean formula.}
+  \item{data}{Data frame.}
+  \item{start}{Named nonlinear parameter starts.}
+  \item{status}{Character vector/column with `none`, `left`, `right`, or `interval`.}
+  \item{lower}{Numeric lower censoring bound or column name.}
+  \item{upper}{Numeric upper censoring bound or column name.}
+  \item{sigma_start}{Positive initial residual SD.}
+  \item{control}{Optimizer control list.}
+}
+\value{An `nlr_censored_fit` object.}
+\examples{
+\dontrun{
+d <- subset(nl_data("soil_p_sorption"),soil_class=="Clayey"); d$status<-"none"; d$lo<-d$sorbed_P_mg_kg; d$up<-d$sorbed_P_mg_kg; nl_censored(sorbed_P_mg_kg~qmax*K*solution_P_mg_L/(1+K*solution_P_mg_L),d,c(qmax=600,K=.2),"status","lo","up",10)
+f <- subset(nl_data("soil_fertility_p"),soil_class=="Loamy"); f$status<-"none"; nl_censored(grain_yield_Mg_ha~Asym-delta*exp(-k*P2O5_kg_ha),f,c(Asym=8,delta=5,k=.02),f$status,-Inf,Inf,.3)
+p <- subset(nl_data("plant_physiology_light"),water_regime=="WellWatered"); p$status<-"none"; nl_censored(A_umol_CO2_m2_s~Amax*alpha*PAR_umol_m2_s/(Amax+alpha*PAR_umol_m2_s)-Rd,p,c(Amax=30,alpha=.06,Rd=1),p$status,-Inf,Inf,1)
+}
+}

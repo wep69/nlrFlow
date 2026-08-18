@@ -1,0 +1,101 @@
+---
+title: "Physics-Informed Neural Networks for Soil Water Dynamics"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Physics-Informed Neural Networks for Soil Water Dynamics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+```
+
+# Agronomic problem
+
+Soil-water measurements are often sparse in depth and time while the governing flow equation is well established. The PINN layer in `nlrFlow` therefore includes a dedicated `richards_1d` problem rather than treating a physics-informed model as ordinary curve fitting. The foundational PINN formulation combines data and governing differential equations [@Raissi2019PINN]. Recent soil-water studies demonstrate the relevance of physics-informed learning for Richards-equation inversion and hydraulic-parameter estimation [@Li2025PINNSoil; @Gong2025PINNRichards; @Qi2026PINNPTF].
+
+For a vertical profile, a common form is
+
+\[
+\frac{\partial \theta}{\partial t}
+=\frac{\partial}{\partial z}\left[K(\theta)\left(\frac{\partial h}{\partial z}+1\right)\right].
+\]
+
+# 1. Richards 1-D PINN
+
+The teaching dataset contains volumetric water content across depths and days. The current backend forms a depth semidiscretization and trains a NeuralPDE `NNODE` representation against observations while preserving hydraulic parameters in the model specification.
+
+```{r richards, eval=FALSE}
+sw <- nl_data("sciml_soil_water")
+
+pinn_water <- nl_pinn(
+  data=sw,
+  problem="richards_1d",
+  time="day",
+  response="theta_cm3_cm3",
+  depth="depth_cm",
+  covariates=c("rain_mm_d","ET0_mm_d"),
+  parameters=c(theta_r=.06, theta_s=.46, alpha=.035, n=1.55, Ks=8.0),
+  estimate_parameters=FALSE,
+  strategy="weighted_interval", collocation_points=800,
+  hidden=c(24,24), seed=20260817, maxiters=1800
+)
+
+p <- nl_plot(pinn_water)
+t <- nl_table(pinn_water)
+pinn_water$parameters
+nl_save_plot(p,"pinn_soil_water.svg",width=180,height=150)
+```
+
+The primary figure is a depth-by-time prediction field. Interpretation must examine whether wetting and drying fronts are reproduced, not only an overall RMSE. `WeightedIntervalTraining` is the default ODE-PINN collocation strategy in this interface; `strategy="grid"` is retained mainly for explicit testing/reproducibility because current NeuralPDE guidance discourages relying on grid training for substantive PINN training.
+
+# 2. Parameter-estimation mode
+
+```{r richards-est, eval=FALSE}
+pinn_inverse <- nl_pinn(
+  sw,"richards_1d","day","theta_cm3_cm3",depth="depth_cm",
+  covariates=c("rain_mm_d","ET0_mm_d"),
+  parameters=c(theta_r=.07,theta_s=.44,alpha=.025,n=1.45,Ks=6),
+  estimate_parameters=TRUE, hidden=c(24,24), seed=20260818
+)
+nl_sciml_diagnose(pinn_inverse)
+nl_table(pinn_inverse)
+pinn_inverse$parameters
+```
+
+Hydraulic estimates should always be checked against physically admissible ranges and independent measurements. A numerically optimized parameter is not automatically a valid soil property.
+
+# 3. Simpler ODE PINN examples
+
+The same interface also supplies lower-dimensional educational examples that are useful before a user attempts Richards flow.
+
+```{r other-pinn, eval=FALSE}
+crop <- nl_data("sciml_crop_growth")
+c1 <- subset(crop,plot_id==unique(plot_id)[1])
+nl_pinn(c1,"logistic_growth","day","biomass_g_m2",parameters=c(r=.10,K=1200),seed=12)
+
+fert <- nl_data("sciml_fertility_dynamic")
+f1 <- subset(fert,plot_id==unique(plot_id)[1])
+nl_pinn(f1,"first_order_nutrient","day","plant_N_g_m2",parameters=c(k=.08,K=18),seed=13)
+```
+
+# Sensor-placement link
+
+After a validated soil-water model is available, candidate times or depths can be scored using `nl_dynamic_design()` and the existing experimental-design tools. For example:
+
+```{r sensor-depth-design, eval=FALSE}
+depth_design <- nl_dynamic_design(
+  pinn_water, candidates=sort(unique(sw$depth_cm)), n_points=3,
+  criterion="curvature", min_distance=10, dimension="depth"
+)
+nl_plot(depth_design)
+nl_table(depth_design)
+```
+
+The scientific objective should be stated before optimization: parameter precision, state reconstruction, or discrimination between rival hydraulic models are not the same design problem.
+
+# When not to use a PINN
+
+Do not use a PINN when the governing equation is not trusted, when boundary/initial conditions are poorly known and dominate the solution, or when a standard numerical inverse problem is already stable and transparent. Physics-informed does not mean physics-correct when the supplied physics is wrong.

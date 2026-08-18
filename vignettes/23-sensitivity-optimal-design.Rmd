@@ -1,0 +1,50 @@
+---
+title: "Global Sensitivity and Optimal Nonlinear Experimental Design"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Global Sensitivity and Optimal Nonlinear Experimental Design}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+```
+
+# Local, Morris and Sobol sensitivity
+
+Parameter standard errors quantify estimation uncertainty, not necessarily the influence of a parameter over the scientifically relevant model output. `nl_sensitivity()` accepts an arbitrary model-output function and can calculate local derivatives, Morris elementary effects, or Sobol first-order and total indices.
+
+```{r sensitivity, eval=FALSE}
+r1 <- matrix(c(10,30,.05,.5),2,2,byrow=TRUE,dimnames=list(c("A","k"),c("lower","upper")))
+nl_sensitivity(function(p)p["A"]*(1-exp(-p["k"]*(1:10))),r1,"local")
+
+r2 <- matrix(c(300,800,.02,.5),2,2,byrow=TRUE,dimnames=list(c("qmax","K"),c("lower","upper")))
+nl_sensitivity(function(p)p["qmax"]*p["K"]*(1:20)/(1+p["K"]*(1:20)),r2,"morris",n=30)
+
+r3 <- matrix(c(10,50,.01,.2),2,2,byrow=TRUE,dimnames=list(c("Amax","alpha"),c("lower","upper")))
+nl_sensitivity(function(p)p["Amax"]*p["alpha"]*(1:50)/(p["Amax"]+p["alpha"]*(1:50)),r3,"sobol",n=500)
+```
+
+# Optimal measurement times and doses
+
+`nl_design()` uses local Fisher information calculated from the nonlinear prediction gradient. It supports D-, A-, E- and c-optimal criteria. Because nonlinear optimal designs depend on nominal parameters, a defensible workflow repeats the design across bootstrap/posterior draws or plausible scenarios.
+
+```{r design, eval=FALSE}
+o <- nl_data("okra_growth_means")
+d_o <- nl_design(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))),o[1,,drop=FALSE],c(Asym=18,k=.4,xmid=4),"day_after_flowering",1:25,6)
+nl_next_measurement(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))),o[1,,drop=FALSE],c(Asym=18,k=.4,xmid=4),"day_after_flowering",1:25,o$day_after_flowering)
+
+f <- subset(nl_data("soil_fertility_p"),soil_class=="Loamy")
+d_f <- nl_design(grain_yield_Mg_ha~Asym-delta*exp(-k*P2O5_kg_ha),f[1,,drop=FALSE],c(Asym=8,delta=5,k=.02),"P2O5_kg_ha",seq(0,300,10),7)
+nl_next_measurement(grain_yield_Mg_ha~Asym-delta*exp(-k*P2O5_kg_ha),f[1,,drop=FALSE],c(Asym=8,delta=5,k=.02),"P2O5_kg_ha",seq(0,300,10),f$P2O5_kg_ha)
+
+p <- subset(nl_data("plant_physiology_light"),water_regime=="WellWatered")
+d_p <- nl_design(A_umol_CO2_m2_s~Amax*alpha*PAR_umol_m2_s/(Amax+alpha*PAR_umol_m2_s)-Rd,p[1,,drop=FALSE],c(Amax=30,alpha=.06,Rd=1),"PAR_umol_m2_s",seq(0,2000,100),7)
+nl_next_measurement(A_umol_CO2_m2_s~Amax*alpha*PAR_umol_m2_s/(Amax+alpha*PAR_umol_m2_s)-Rd,p[1,,drop=FALSE],c(Amax=30,alpha=.06,Rd=1),"PAR_umol_m2_s",seq(0,2000,100),p$PAR_umol_m2_s)
+```
+
+## Method references
+
+Global sensitivity is compared with `GlobalSensitivity.jl` [@Dixit2022]. Nonlinear optimal and sequential design context follows @BubelDesign2025 and @Ghosh2026PICS.

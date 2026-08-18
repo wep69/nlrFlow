@@ -1,0 +1,25 @@
+---
+title: "Dynamic and ODE-based nonlinear models"
+output: rmarkdown::html_vignette
+vignette: >
+  %%\VignetteIndexEntry{Dynamic and ODE-based nonlinear models}
+  %%\VignetteEngine{knitr::rmarkdown}
+  %%\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(nlrFlow)
+```
+
+Closed-form curves are preferred when scientifically adequate and identifiable. When process dynamics require state equations, `nl_ode_solve()` preserves explicit ODE structure; population dynamic models can be delegated to `nlmixr2` through `nl_dynamic()`.
+
+```{r eval=FALSE}
+f <- function(t,state,parms) list(c(parms["r"]*(parms["K"]-state[1])))
+nl_ode_solve(c(B=1),0:30,f,c(r=.08,K=20))
+nl_ode_solve(c(B=2),seq(0,60,2),f,c(r=.04,K=25))
+nl_ode_solve(c(B=.5),0:20,f,c(r=.12,K=15))
+nl_dynamic(crop_ode_model,crop_longitudinal,est="saem")
+nl_dynamic(soil_pool_model,soil_longitudinal,est="focei")
+nl_dynamic(physiology_ode_model,physiology_longitudinal,est="saem")
+```

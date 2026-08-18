@@ -1,0 +1,17 @@
+\name{nl_compare}
+\alias{nl_compare}
+\title{Compare fitted nonlinear models}
+\description{Produces a model-comparison table using information criteria, residual metrics, and optionally cross-validation. It does not perform invalid likelihood-ratio tests for non-nested curves.}
+\usage{nl_compare(fits, ..., cv=FALSE, k=5)}
+\arguments{
+  \item{fits}{An `nlrfit_list`, named list of `nlrfit`, or individual fits.}
+  \item{...}{Additional fits when the first argument is a single fit.}
+  \item{cv}{Logical; compute K-fold cross-validation.}
+  \item{k}{Number of folds.}
+}
+\value{A data frame with fit statistics and ranking quantities.}
+\examples{
+x <- nl_fit_many(nl_data("okra_growth_means"),"fruit_length","day_after_flowering",c("logistic","gompertz"),engine="nls"); nl_compare(x)
+y <- nl_fit_many(subset(nl_data("soil_fertility_p"),soil_class=="Loamy"),"grain_yield_Mg_ha","P2O5_kg_ha",c("mitscherlich","michaelis_menten"),engine="nls"); nl_compare(y)
+z <- nl_fit_many(subset(nl_data("soil_infiltration"),management=="Conventional"),"cumulative_infiltration_mm","time_min",c("michaelis_menten","monomolecular"),engine="nls"); nl_compare(z,cv=TRUE,k=3)
+}

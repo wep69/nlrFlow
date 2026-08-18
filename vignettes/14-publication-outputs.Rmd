@@ -1,0 +1,34 @@
+---
+title: "Publication-ready graphics and tables"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Publication-ready graphics and tables}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(nlrFlow)
+```
+
+```{r eval=FALSE}
+f <- nl_fit(data=nl_data("okra_growth_means"),model="gompertz",response="fruit_length",predictor="day_after_flowering",engine="nls")
+nl_plot(f)
+nl_plot_diagnostics(f)
+nl_table(f,"parameters")
+nl_report(f,"okra_report.md")
+```
+
+
+## Exporting scientific tables
+
+`nl_table()` can return an editable data frame or `gt` object, and can also write common publication/exchange formats. PDF/PNG table export uses the optional `webshot2` dependency; Word export is handled by the current `gt`/R Markdown pathway.
+
+```{r eval=FALSE}
+nl_table(f, "parameters", render="csv",  file="parameters.csv")
+nl_table(f, "parameters", render="xlsx", file="parameters.xlsx")
+nl_table(f, "parameters", render="docx", file="parameters.docx")
+nl_table(f, "parameters", render="latex",file="parameters.tex")
+nl_table(f, "parameters", render="pdf",  file="parameters.pdf")
+```

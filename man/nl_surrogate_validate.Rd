@@ -1,0 +1,19 @@
+\name{nl_surrogate_validate}
+\alias{nl_surrogate_validate}
+\title{Validate a nonlinear surrogate on independent simulator runs}
+\description{Computes prediction error and empirical interval coverage where surrogate standard errors are available.}
+\usage{nl_surrogate_validate(object,parameters,response,level=.95)}
+\arguments{
+  \item{object}{An `nlr_surrogate`.}
+  \item{parameters}{Validation parameter matrix/data frame.}
+  \item{response}{True simulator outputs.}
+  \item{level}{Nominal normal-approximation prediction level.}
+}
+\value{A data frame of validation metrics and predictions.}
+\examples{
+\dontrun{
+X<-expand.grid(A=seq(15,22,length=8),k=seq(.2,.7,length=8));y<-with(X,A*k/exp(1));s<-nl_surrogate(X,y,"quadratic");nl_surrogate_validate(s,X,y)
+X2<-data.frame(qmax=runif(50,300,800),K=runif(50,.02,.5));y2<-with(X2,qmax*K*10/(1+K*10));s2<-nl_surrogate(X2,y2,"gp");nl_surrogate_validate(s2,X2,y2)
+X3<-data.frame(Amax=runif(50,10,50),alpha=runif(50,.01,.2));y3<-with(X3,Amax*alpha*1000/(Amax+alpha*1000));s3<-nl_surrogate(X3,y3,"gp");nl_surrogate_validate(s3,X3,y3)
+}
+}

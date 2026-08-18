@@ -1,0 +1,80 @@
+Package: nlrFlow
+Type: Package
+Title: Integrated Scientific Workflows for Nonlinear Regression
+Version: 0.3.0.9000
+Authors@R: c(
+    person("Walter Esfrain", "Pereira", role = c("aut", "cre", "cph"),
+           email = "walterufpb@yahoo.com.br",
+           comment = c(ORCID = "0000-0003-1085-0191")),
+    person("Magali Haidee", "Pereira Martinez", role = "aut",
+           comment = c(ORCID = "0009-0009-5419-959X"))
+    )
+Description: Provides an integrated, auditable workflow for nonlinear regression
+    from model choice and starting-value generation through classical nonlinear
+    least squares, generalized nonlinear least squares, resistant and quantile
+    regression, nonlinear mixed-effects models, Bayesian nonlinear models,
+    bootstrap and conformal inference, measurement-error models, joint
+    mean-variance regression, censored and truncated likelihoods, automatic
+    differentiation, stochastic state-space models, sensitivity analysis, optimal
+    nonlinear design, surrogate modelling, uncertainty propagation, knowledge-
+    guided symbolic equation discovery, model discrimination, and sequential
+    experiment discovery, Neural Ordinary Differential Equations, Universal
+    Differential Equations, physics-informed neural networks, missing-physics
+    decomposition, symbolic discovery from learned dynamics, Scientific Machine
+    Learning diagnostics, and dynamic experimental design and control. The package
+    orchestrates established numerical engines,
+    preserves experimental-design information, separates method families and
+    assumptions explicitly, and provides publication-ready graphics, tables,
+    reports, teaching datasets, and cross-domain agronomic examples.
+License: MIT + file LICENSE
+Encoding: UTF-8
+SystemRequirements: Julia (optional; required only for SciML blocks 68-74)
+LazyData: true
+Roxygen: list(markdown = TRUE)
+Depends: R (>= 4.2.0)
+Imports:
+    stats,
+    utils,
+    graphics
+Suggests:
+    minpack.lm,
+    nls.multstart,
+    GA,
+    nlme,
+    robustbase,
+    quantreg,
+    brms,
+    loo,
+    cmdstanr,
+    saemix,
+    deSolve,
+    rxode2,
+    nlmixr2,
+    nlraa,
+    nlstools,
+    IPEC,
+    qrNLMM,
+    RTMB,
+    BayesRTMB,
+    ctsmTMB,
+    DiceKriging,
+    reticulate,
+    drc,
+    emmeans,
+    ggplot2,
+    patchwork,
+    gt,
+    writexl,
+    webshot2,
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown,
+    shiny,
+    vdiffr,
+    jsonlite
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+URL: https://github.com/walter-esfrain/nlrFlow
+BugReports: https://github.com/walter-esfrain/nlrFlow/issues
+Language: en-US
+Config/roxygen2/version: 8.1.0

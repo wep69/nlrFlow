@@ -1,0 +1,21 @@
+---
+title: "Foundations of nonlinear regression"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Foundations of nonlinear regression}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(nlrFlow)
+```
+
+Nonlinear regression is nonlinear in unknown parameters, not merely curved in the predictor. This vignette distinguishes model mechanism, parameterization, initialization, identifiability, residual structure and uncertainty.
+
+```{r}
+nl_models()
+nl_model_info("richards")
+nl_teach("richards")
+```

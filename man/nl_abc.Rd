@@ -1,0 +1,26 @@
+\name{nl_abc}
+\alias{nl_abc}
+\title{Approximate Bayesian computation for nonlinear simulators}
+\description{Implements a transparent rejection-ABC workflow for simulator-based models whose likelihood is unavailable or intentionally avoided. Priors are sampled, simulations are summarized, distances are calculated on standardized summary statistics, and the best fraction is retained.}
+\usage{nl_abc(observed, simulator, prior_sampler, summary_fun, n_sim = 10000, tolerance = 0.01, seed = 20260817, scale = NULL)}
+\arguments{
+  \item{observed}{Observed data object passed to `summary_fun`.}
+  \item{simulator}{Function of one named parameter vector returning simulated data.}
+  \item{prior_sampler}{Function taking integer `n` and returning an `n x p` matrix/data frame.}
+  \item{summary_fun}{Function returning a numeric summary vector.}
+  \item{n_sim}{Number of prior predictive simulations.}
+  \item{tolerance}{Fraction of simulations retained, in (0,1).}
+  \item{seed}{Random seed.}
+  \item{scale}{Optional positive scale vector for summary statistics. If `NULL`,}
+}
+\value{An `nlr_abc` object with accepted parameters, summaries and distances.}
+\examples{
+\dontrun{
+obs <- nl_data("okra_growth_means")$fruit_length
+prior <- function(n) cbind(Asym=runif(n,15,25),k=runif(n,.1,1),xmid=runif(n,1,8))
+sim <- function(p) p["Asym"]*exp(-exp(-p["k"]*((1:10)-p["xmid"]))) + rnorm(10,0,.5)
+nl_abc(obs,sim,prior,function(z)c(mean=mean(z),sd=sd(z),max=max(z)),n_sim=2000)
+nl_abc(c(1,2,4,7),function(p)p[1]*(1-exp(-p[2]*(1:4))),function(n)cbind(A=runif(n,5,10),k=runif(n,.1,1)),function(z)c(z),n_sim=1000)
+nl_abc(c(.4,.3,.2),function(p)exp(-p[1]*(1:3))+rnorm(3,0,p[2]),function(n)cbind(k=runif(n,.01,2),sd=runif(n,.01,.3)),function(z)c(mean(z),diff(range(z))),n_sim=1000)
+}
+}

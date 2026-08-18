@@ -1,0 +1,26 @@
+\name{nl_ude_discover}
+\alias{nl_ude_discover}
+\title{Discover symbolic equations from a learned UDE correction}
+\description{Applies SymbolicRegression.jl to the learned neural derivative. The returned Pareto frontier is a hypothesis set, not proof of a biological law; candidates should be validated and, ideally, tested in new experiments.}
+\usage{nl_ude_discover(object,predictors,state=NULL,niterations=200,binary_operators=c("+","-","*","/"), unary_operators=c("exp","log","sqrt"),maxsize=18,seed=20260817, parallelism=c("serial","multithreading"),deterministic=TRUE, julia=NULL,output_dir=NULL,dry_run=FALSE)}
+\arguments{
+  \item{object}{Executed `nlr_ude` or `nlr_missing_physics` object.}
+  \item{predictors}{Columns of the decomposition table used to explain the neural correction.}
+  \item{state}{Optional state.}
+  \item{niterations}{Symbolic-regression iterations.}
+  \item{binary_operators}{Allowed binary operators.}
+  \item{unary_operators}{Allowed unary operators.}
+  \item{maxsize}{Maximum expression size.}
+  \item{seed}{Seed.}
+  \item{parallelism}{SymbolicRegression.jl search mode: `serial` (default, reproducibility-focused) or `multithreading`.}
+  \item{deterministic}{Logical; request deterministic birth-order bookkeeping. This requires serial search.}
+  \item{julia}{Julia executable.}
+  \item{output_dir}{Output directory.}
+  \item{dry_run}{Return specification only.}
+}
+\value{An `nlr_ude_discovery` object or dry-run specification.}
+\examples{
+d<-subset(nl_data("sciml_crop_growth"),plot_id==unique(nl_data("sciml_crop_growth")$plot_id)[1]);u<-nl_ude(d,"day","biomass_g_m2",c("temperature_C","PAR_MJ_m2_d","soil_water_rel","nitrogen_rel"),template="crop_growth_rue",known_parameters=c(RUE=2.8,Topt=26,Twidth=10,respiration=.01),dry_run=TRUE);nl_ude_discover(u,c("nitrogen_rel","soil_water_rel"),dry_run=TRUE)
+d<-subset(nl_data("sciml_fruit_growth"),fruit_id==unique(nl_data("sciml_fruit_growth")$fruit_id)[1]);u<-nl_ude(d,"day_after_set","fruit_mass_g",c("temperature_C","soil_water_rel"),template="fruit_growth",known_parameters=c(r=.2,K=200),dry_run=TRUE);nl_ude_discover(u,c("temperature_C","soil_water_rel"),dry_run=TRUE)
+d<-subset(nl_data("sciml_fertility_dynamic"),plot_id==unique(nl_data("sciml_fertility_dynamic")$plot_id)[1]);u<-nl_ude(d,"day",c("plant_N_g_m2","soil_mineral_N_mg_kg"),c("temperature_C","soil_water_rel"),template="nitrogen_uptake",known_parameters=c(vmax=.08,Km=20),dry_run=TRUE);nl_ude_discover(u,c("temperature_C","soil_water_rel"),state="plant_N_g_m2",dry_run=TRUE)
+}

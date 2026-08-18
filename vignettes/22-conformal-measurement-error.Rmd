@@ -1,0 +1,66 @@
+---
+title: "Conformal Prediction and Measurement Error"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Conformal Prediction and Measurement Error}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+```
+
+# Prediction is not parameter uncertainty
+
+A confidence band for the conditional mean and an interval for a new observation answer different questions. `nl_conformal()` adds split-conformal prediction to refit-capable nonlinear models. The calibration quantile uses the finite-sample order-statistic correction rather than a normal residual approximation.
+
+```{r conformal, eval=FALSE}
+okra <- nl_data("okra_growth_means")
+fo <- nl_fit(data=okra,model="gompertz",response="fruit_length",predictor="day_after_flowering",engine="nls")
+ci_o <- nl_conformal(fo, alpha=.10)
+
+fert <- subset(nl_data("soil_fertility_p"),soil_class=="Loamy")
+ff <- nl_fit(data=fert,model="mitscherlich",response="grain_yield_Mg_ha",predictor="P2O5_kg_ha",engine="nls")
+ci_f <- nl_conformal(ff)
+
+soil <- subset(nl_data("soil_infiltration"),management=="NoTill")
+fs <- nl_fit(data=soil,model="michaelis_menten",response="cumulative_infiltration_mm",predictor="time_min",engine="nls")
+ci_s <- nl_conformal(fs)
+```
+
+For clustered experiments the split must occur at the experimental-unit level. `nl_conformal_group()` with `strata` additionally implements a Mondrian-style calibration in which score distributions can differ by cultivar, management or physiological regime.
+
+```{r cluster-conformal, eval=FALSE}
+a <- nl_data("agronomy_growth"); a$unit <- interaction(a$cultivar,a$block,drop=TRUE)
+fa <- nl_fit(biomass_Mg_ha~Asym/(1+exp(-k*(day-xmid))),a,start=list(Asym=18,k=.08,xmid=50),engine="nls")
+nl_conformal_group(fa,"unit",strata="cultivar")
+
+p <- nl_data("plant_physiology_light")
+fp <- nl_fit(A_umol_CO2_m2_s~Amax*alpha*PAR_umol_m2_s/(Amax+alpha*PAR_umol_m2_s)-Rd,p,start=list(Amax=30,alpha=.06,Rd=1),engine="nls")
+nl_conformal_group(fp,"plant_id",strata="water_regime")
+
+s <- nl_data("soil_infiltration"); s$unit <- interaction(s$management,s$block,drop=TRUE)
+fi <- nl_fit(cumulative_infiltration_mm~Vmax*time_min/(Km+time_min),s,start=list(Vmax=140,Km=30),engine="nls")
+nl_conformal_group(fi,"unit",strata="management")
+```
+
+# Errors in variables
+
+When a predictor such as solution P, irradiance, electrical conductivity or matric potential has non-negligible measurement uncertainty, ordinary nonlinear regression can bias parameter estimates. `nl_measurement_error()` treats the true predictor as latent and maximizes the joint Gaussian measurement model.
+
+```{r eiv, eval=FALSE}
+s <- subset(nl_data("soil_p_sorption"),soil_class=="Clayey")
+nl_measurement_error(sorbed_P_mg_kg~qmax*K*solution_P_mg_L/(1+K*solution_P_mg_L),s,c(qmax=600,K=.2),"solution_P_mg_L",sd_x=.05,sd_y=10)
+
+p <- subset(nl_data("plant_physiology_light"),water_regime=="WellWatered")
+nl_measurement_error(A_umol_CO2_m2_s~Amax*alpha*PAR_umol_m2_s/(Amax+alpha*PAR_umol_m2_s)-Rd,p,c(Amax=30,alpha=.06,Rd=1),"PAR_umol_m2_s",sd_x=10,sd_y=1)
+
+f <- subset(nl_data("soil_fertility_p"),soil_class=="Loamy")
+nl_measurement_error(grain_yield_Mg_ha~Asym-delta*exp(-k*P2O5_kg_ha),f,c(Asym=8,delta=5,k=.02),"P2O5_kg_ha",sd_x=2,sd_y=.25)
+```
+
+## Method references
+
+Conformal prediction is compared with the MAPIE ecosystem [@Cordier2023MAPIE] and group/bin-conditional developments [@Randahl2026]. Measurement-error motivation is supported by @Zhang2024 and @Ye2025.

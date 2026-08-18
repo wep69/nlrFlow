@@ -1,0 +1,52 @@
+---
+title: "Knowledge-Guided Symbolic Regression and Equation Discovery"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Knowledge-Guided Symbolic Regression and Equation Discovery}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+```
+
+# Symbolic regression is a hypothesis generator
+
+`nl_symbolic()` optionally calls PySR, which uses SymbolicRegression.jl. The returned equation set is deliberately not converted automatically into a biological conclusion. Complexity control and restricted operators reduce the search space, but scientific constraints remain the user's responsibility.
+
+```{r pysr, eval=FALSE}
+o <- nl_data("okra_growth_means")
+sr_o <- nl_symbolic(o,"fruit_length","day_after_flowering",niterations=200,binary_operators=c("+","-","*","/"),unary_operators=c("exp"))
+
+f <- nl_data("soil_fertility_p")
+sr_f <- nl_symbolic(f,"grain_yield_Mg_ha","P2O5_kg_ha",niterations=200,binary_operators=c("+","-","*","/"),unary_operators=c("exp","log"))
+
+p <- nl_data("plant_physiology_light")
+sr_p <- nl_symbolic(p,"A_umol_CO2_m2_s","PAR_umol_m2_s",niterations=200,binary_operators=c("+","-","*","/"),unary_operators=c("sqrt"))
+```
+
+The recommended next step is to translate scientifically defensible expressions into interpretable parameterizations. `nl_discover()` then evaluates established mechanistic equations and new candidate formulas under the same inference and validation workflow.
+
+```{r discover, eval=FALSE}
+do <- nl_discover(o,"fruit_length","day_after_flowering",c("gompertz","logistic","richards"),constraints=list(positive=TRUE,monotonic="increasing"),engine="nls")
+ff <- subset(nl_data("soil_fertility_p"),soil_class=="Loamy")
+df <- nl_discover(ff,"grain_yield_Mg_ha","P2O5_kg_ha",c("mitscherlich","michaelis_menten","linear_plateau"),constraints=list(positive=TRUE),engine="nls")
+ss <- subset(nl_data("soil_p_sorption"),soil_class=="Clayey")
+ds <- nl_discover(ss,"sorbed_P_mg_kg","solution_P_mg_L",c("langmuir","freundlich"),constraints=list(positive=TRUE,monotonic="increasing"),engine="nls")
+```
+
+# Scientific validation before ranking
+
+```{r validate, eval=FALSE}
+vo <- nl_validate_candidate(do$fits$gompertz,"day_after_flowering",list(positive=TRUE,monotonic="increasing",response_range=c(0,30)))
+vf <- nl_validate_candidate(df$fits$mitscherlich,"P2O5_kg_ha",list(positive=TRUE,monotonic="increasing"))
+vs <- nl_validate_candidate(ds$fits$langmuir,"solution_P_mg_L",list(positive=TRUE,monotonic="increasing"))
+```
+
+A candidate can therefore fit the observed data well yet fail because it becomes negative, changes direction outside the observed support, violates plausible bounds, or is predictively unstable under cross-validation.
+
+## Method references
+
+PySR is described by @Cranmer2023. Knowledge-guided symbolic regression integrated with model-based experimental design is exemplified by @Rogers2024.

@@ -1,0 +1,19 @@
+\name{nl_curvature}
+\alias{nl_curvature}
+\title{Bates-Watts-style nonlinear curvature diagnostics}
+\description{Computes root-mean-square intrinsic and parameter-effects curvature through `IPEC::curvIPEC`. This diagnostic assesses how strongly first-order linear approximations may be distorted by the model-data geometry.}
+\usage{nl_curvature(object,predictor=NULL,level=.95,...)}
+\arguments{
+  \item{object}{An `nlrfit` object with one primary numeric predictor.}
+  \item{predictor}{Predictor name; inferred when there is exactly one numeric predictor in the nonlinear formula.}
+  \item{level}{Reference confidence level used by the curvature critical value.}
+  \item{...}{Additional arguments passed to `IPEC::curvIPEC`.}
+}
+\value{An `nlr_curvature` object containing RMS intrinsic curvature, RMS parameter-effects curvature, the critical curvature, and the backend result.}
+\examples{
+\dontrun{
+f <- nl_fit(data=nl_data("okra_growth_means"),model="richards",response="fruit_length",predictor="day_after_flowering",engine="nls"); nl_curvature(f)
+f <- nl_fit(data=subset(nl_data("soil_fertility_p"),soil_class=="Loamy"),model="mitscherlich",response="grain_yield_Mg_ha",predictor="P2O5_kg_ha",engine="nls"); nl_curvature(f)
+f <- nl_fit(data=subset(nl_data("plant_physiology_light"),water_regime=="WellWatered"),model="rectangular_hyperbola",response="A_umol_CO2_m2_s",predictor="PAR_umol_m2_s",engine="nls"); nl_curvature(f)
+}
+}

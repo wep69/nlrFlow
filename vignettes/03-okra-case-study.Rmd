@@ -1,0 +1,119 @@
+---
+title: "Okra fruit growth: from raw observations to biological rates"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Okra fruit growth: from raw observations to biological rates}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(nlrFlow)
+```
+
+## Why two okra datasets are distributed
+
+`okra_growth_raw` preserves the 530 individual observations from the source script. `okra_growth_means` is a deterministic time-specific summary and is useful for curve illustration, but it should not silently replace the individual observations when uncertainty depends on within-time variation.
+
+```{r}
+raw <- nl_data("okra_growth_raw")
+means <- nl_data("okra_growth_means")
+nl_audit(raw, "fruit_length", "day_after_flowering")
+nl_audit(means, "fruit_length", "day_after_flowering")
+```
+
+## Candidate growth equations
+
+A first analysis compares several biologically plausible sigmoidal curves without treating non-nested equations as if they were nested models.
+
+```{r}
+fits <- nl_fit_many(
+  means,
+  response = "fruit_length",
+  predictor = "day_after_flowering",
+  models = c("logistic", "gompertz", "richards", "chapman_richards", "weibull_growth"),
+  engine = "nls"
+)
+nl_compare(fits)
+best <- nl_select(fits)
+```
+
+AIC/AICc/BIC and prediction metrics are evidence for model comparison, not proof that a curve is biologically correct. Use `nl_lrt()` only when mathematical nesting has been established explicitly.
+
+## Diagnostics and parameter identifiability
+
+```{r}
+nl_diagnose(best)
+nl_identify(best)
+# Joint Beale confidence region for an nls-compatible fit:
+# nl_confregion(best, n = 2000)
+# Exact RMS curvature diagnostics are available through the optional IPEC backend.
+# nl_curvature(best)
+nl_influence(best)
+nl_plot_diagnostics(best)
+```
+
+The identifiability step is particularly important for flexible four-parameter curves such as Richards. A visually close fit may still contain poorly separated parameters.
+
+## Bootstrap uncertainty
+
+```{r, eval=FALSE}
+b <- nl_boot(best, R = 2000, type = "case", seed = 20260817)
+nl_confint(best, method = "bootstrap", boot = b, bootstrap_interval = "bca")
+nl_predict(best, interval = "confidence", nsim = 4000, seed = 20260817)
+```
+
+For inference from the raw individual observations, preserve their replication structure. A case bootstrap can resample observations, while a cluster bootstrap should be preferred when a real experimental-unit identifier exists.
+
+## Absolute and relative fruit-growth rates
+
+```{r}
+der <- nl_derive(best)
+der$summary
+head(der$curve)
+```
+
+`AGR` approximates the first derivative of the fitted response. `RGR` divides that rate by the fitted response. The package also reports the inflection location, maximum absolute growth rate, its timing, the midpoint time and the area under the curve.
+
+```{r, eval=FALSE}
+der_b <- nl_derive(best, boot = b, level = 0.95)
+nl_table(der_b, type = "derived", render = "gt")
+```
+
+## Resistant and quantile sensitivity analyses
+
+The raw dataset contains substantial within-time dispersion. Resistant and nonlinear quantile fits can be useful sensitivity analyses when a mean Gaussian curve is not an adequate summary.
+
+```{r, eval=FALSE}
+f_rob <- nl_robust(
+  fruit_length ~ Asym * exp(-exp(-k * (day_after_flowering - xmid))),
+  raw,
+  start = list(Asym = 18, k = 0.4, xmid = 4)
+)
+f_q50 <- nl_quantile(
+  fruit_length ~ Asym * exp(-exp(-k * (day_after_flowering - xmid))),
+  raw,
+  start = list(Asym = 18, k = 0.4, xmid = 4), tau = 0.50
+)
+f_q90 <- nl_quantile(
+  fruit_length ~ Asym * exp(-exp(-k * (day_after_flowering - xmid))),
+  raw,
+  start = list(Asym = 20, k = 0.4, xmid = 4), tau = 0.90
+)
+```
+
+## Publication output
+
+```{r, eval=FALSE}
+p <- nl_plot(best, interval = "confidence", raw_data = raw)
+nl_save_plot(p, "okra_growth_curve.tiff", width = 180, height = 120,
+             units = "mm", dpi = 600)
+nl_table(best, type = "parameters", render = "gt")
+```
+
+The raw observations should normally remain visible in the final scientific figure, even when the curve was initially selected with time-specific means for a didactic comparison.
+
+# Bayesian alternatives can be diagnosed and compared after fitting:
+# nl_bayes_diagnose(okra_bayes)
+# nl_bayes_compare(list(Gompertz=okra_gomp_bayes, Richards=okra_rich_bayes))

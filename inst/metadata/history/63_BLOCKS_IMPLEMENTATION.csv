@@ -1,0 +1,64 @@
+block,component,implementation,status
+1,Data audit and design awareness,nl_audit,Implemented
+2,Linear vs nonlinear-in-parameters teaching,nl_teach; vignette 01,Implemented
+3,Central nonlinear model registry,nl_models,Implemented
+4,Alternative parameterizations and model cards,nl_model_info,Implemented
+5,Natural parameter constraints,nl_fit lower/upper; Bayesian priors,Implemented
+6,Self-start integration,registry + nl_start + optional nlraa,Implemented
+7,Automatic starting values,nl_start,Implemented
+8,Multistart/global initialization,nl_multistart; nl_global_start; nl_fit(engine=multistart),Implemented
+9,Convergence diagnostics,nl_fit + nl_identify + audit,Implemented
+10,Unified result class,nlrfit,Implemented
+11,Classical NLS,nl_fit(engine=nls),Implemented
+12,Levenberg-Marquardt and bounds,nl_fit(engine=nlsLM),Implemented
+13,Weighted nonlinear least squares,nl_fit weights,Implemented
+14,Generalized nonlinear least squares,nl_fit(engine=gnls),Implemented
+15,Heteroscedasticity,gnls weights + nl_diagnose,Implemented
+16,Residual correlation,gnls/nlme correlation,Implemented
+17,Qualitative factors on parameters,gnls params; nlme fixed; brms formula,Implemented
+18,Simultaneous curve comparison,nl_curve_test; parameter models,Implemented
+19,Parameter contrasts,nl_contrast,Implemented
+20,Profile likelihood and confidence regions,nl_confint(profile); nl_confregion,Implemented
+21,Wald/delta intervals,nl_confint(wald); nl_predict,Implemented
+22,Profile likelihood intervals,nl_confint(profile); nl_confregion,Implemented
+23,Residual bootstrap,nl_boot(residual),Implemented
+24,Parametric bootstrap,nl_boot(parametric),Implemented
+25,Case bootstrap,nl_boot(case),Implemented
+26,Stratified/cluster bootstrap,nl_boot(cluster),Implemented
+27,Wild bootstrap,nl_boot(wild),Implemented
+28,Percentile/BCa intervals,nl_confint bootstrap percentile/BCa,Implemented
+29,Confidence and prediction bands,nl_predict,Implemented
+30,Uncertainty for derived functions,nl_derive with bootstrap intervals,Implemented
+31,Robust nonlinear regression,nl_robust,Implemented optional backend
+32,Nonlinear quantile regression,nl_quantile,Implemented optional backend
+33,Nonlinear mixed effects,nl_mixed,Implemented optional backend
+34,SAEM mixed effects,nl_saemix,Implemented optional backend
+35,Bayesian nonlinear models,nl_bayes,Implemented optional backend
+36,Bayesian model checking,nl_ppcheck; nl_bayes_diagnose; explicit priors,Implemented optional backend
+37,Non-Gaussian/distributional nonlinear models,nl_bayes family/distributional formula,Implemented via brms backend
+38,Qualitative factors and curve hypotheses,gnls/nlme/brms + nl_curve_test,Implemented
+39,Large equation library,24 built-ins + optional nlraa/drc ecosystem,Implemented
+40,Biological derived quantities,nl_derive,Implemented
+41,Model comparison and prediction metrics,nl_compare; nl_cv; nl_select; nl_lrt guard; nl_bayes_compare,Implemented
+42,Diagnostics and identifiability,nl_diagnose; nl_influence; nl_identify; nl_curvature,Implemented
+43,Dynamic/ODE models,nl_ode_solve (deSolve) + nl_dynamic (nlmixr2),Implemented optional backends
+44,Expanded didactic module,nl_teach; nl_tutor; 20 vignettes,Implemented
+45,Automatic differentiation / RTMB,nl_rtmb; nl_ad,Implemented optional RTMB backend
+46,Fast Laplace and BayesRTMB,nl_bayes_rtmb; nl_bayes_approx,Implemented optional BayesRTMB backend
+47,Nonlinear quantile mixed models,nl_quantile_mixed,Implemented optional qrNLMM backend
+48,Robust nonlinear quantile mixed sensitivity,nl_quantile_mixed_robust,Implemented experimental penalized smooth-pinball estimator; cGAL not claimed
+49,Conformal prediction,nl_conformal,Implemented split conformal
+50,Cluster/group conformal prediction,nl_conformal_group,Implemented cluster split + Mondrian strata
+51,Measurement-error nonlinear models,nl_measurement_error,Implemented Gaussian nonlinear errors-in-variables MLE
+52,Joint mean-variance nonlinear models,nl_mean_variance,Implemented joint Gaussian mean/log-SD likelihood
+53,Censored/truncated nonlinear regression,nl_censored; nl_truncated,Implemented Gaussian censoring/truncation likelihoods
+54,Structural identifiability,nl_structural_identify,Implemented local structural sensitivity-rank screen; global proof explicitly out of scope
+55,Global sensitivity analysis,nl_sensitivity,"Implemented local, Morris and Sobol indices"
+56,Optimal experimental design,nl_design; nl_next_measurement,Implemented local D/A/E/c Fisher-information design
+57,Stochastic state-space nonlinear models,nl_state_space,Implemented optional ctsmTMB adapter
+58,Process error versus measurement error,nl_error_decompose,Implemented state-space diagnostic/decomposition helper
+59,Mechanistic + Gaussian-process discrepancy,nl_gp_discrepancy,Implemented sequential residual-GP diagnostic via DiceKriging
+60,Surrogate-assisted nonlinear inference,nl_surrogate; nl_surrogate_validate,Implemented GP and quadratic surrogate with validation
+61,Sparse/cubature uncertainty propagation,nl_propagate,Implemented spherical-radial sigma-point propagation
+62,Approximate Bayesian computation,nl_abc,Implemented transparent rejection ABC
+63,Variational/Laplace Bayesian inference,nl_bayes_approx,Implemented BayesRTMB ADVI/Laplace routing

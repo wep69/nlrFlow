@@ -1,0 +1,121 @@
+---
+title: "General agronomy: cultivar growth, qualitative factors, and hierarchical curves"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{General agronomy: cultivar growth, qualitative factors, and hierarchical curves}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+library(nlrFlow)
+```
+
+## Experimental structure
+
+The frozen teaching dataset represents biomass trajectories for three cultivars in blocks. It is simulated and exists to show how agronomic design information changes a nonlinear analysis.
+
+```{r}
+a <- nl_data("agronomy_growth")
+a$unit_id <- interaction(a$cultivar, a$block, drop = TRUE)
+nl_audit(a, "biomass_Mg_ha", "day", c("cultivar", "block"))
+```
+
+## Step 1: understand the curve family within one cultivar
+
+```{r}
+one <- subset(a, cultivar == "C1")
+candidates <- nl_fit_many(
+  one, "biomass_Mg_ha", "day",
+  c("logistic", "gompertz", "richards", "weibull_growth", "von_bertalanffy"),
+  engine = "nls"
+)
+nl_compare(candidates)
+f1 <- nl_select(candidates)
+nl_diagnose(f1)
+nl_derive(f1)
+```
+
+This model-selection step is exploratory. Once a useful functional form has been chosen, cultivar effects should be tested in a joint model rather than by comparing significance labels from three independent fits.
+
+## Step 2: qualitative cultivar effects on nonlinear parameters
+
+```{r, eval=FALSE}
+g <- nl_fit(
+  biomass_Mg_ha ~ Asym/(1 + exp(-k * (day - xmid))),
+  data = a,
+  start = c(18, 2, 1, 0.09, -0.005, 0.01, 52),
+  engine = "gnls",
+  params = list(Asym ~ cultivar, k ~ cultivar, xmid ~ 1)
+)
+summary(g)
+```
+
+This specification asks whether cultivars differ in asymptotic biomass and growth-rate parameter while sharing the midpoint. Alternative nested parameter structures can be built deliberately and compared only when their nesting is genuine.
+
+## Step 3: repeated observations and random effects
+
+```{r, eval=FALSE}
+m <- nl_mixed(
+  biomass_Mg_ha ~ Asym/(1 + exp(-k * (day - xmid))),
+  data = a,
+  fixed = list(Asym ~ cultivar, k ~ cultivar, xmid ~ 1),
+  random = Asym ~ 1 | unit_id,
+  start = c(18, 2, 1, 0.09, -0.005, 0.01, 52),
+  method = "ML"
+)
+summary(m)
+```
+
+The random effect represents heterogeneity among experimental units, not an arbitrary device to increase model complexity. More complex random structures should be justified by the design and by identifiability.
+
+## Step 4: heteroscedastic or serially correlated trajectories
+
+```{r, eval=FALSE}
+m_varcor <- nl_mixed(
+  biomass_Mg_ha ~ Asym/(1 + exp(-k * (day - xmid))),
+  data = a,
+  fixed = list(Asym ~ cultivar, k ~ cultivar, xmid ~ 1),
+  random = Asym ~ 1 | unit_id,
+  start = c(18, 2, 1, 0.09, -0.005, 0.01, 52),
+  weights = nlme::varPower(form = ~ fitted(.)),
+  correlation = nlme::corCAR1(form = ~ day | unit_id),
+  method = "ML"
+)
+```
+
+## Step 5: Bayesian multilevel extension
+
+```{r, eval=FALSE}
+bf <- brms::bf(
+  biomass_Mg_ha ~ Asym/(1 + exp(-k * (day - xmid))),
+  Asym ~ 1 + cultivar + (1 | unit_id),
+  k ~ 1 + cultivar,
+  xmid ~ 1,
+  nl = TRUE
+)
+pri <- c(
+  brms::prior(normal(18, 5), nlpar = "Asym"),
+  brms::prior(lognormal(log(0.08), 0.5), nlpar = "k", lb = 0),
+  brms::prior(normal(50, 15), nlpar = "xmid")
+)
+bm <- nl_bayes(bf, a, prior = pri, family = gaussian(), chains = 4, cores = 4)
+nl_ppcheck(bm, type = "dens_overlay")
+```
+
+The Bayesian specification makes the parameter model and prior information explicit. Posterior probabilities and derived quantities can then be interpreted directly instead of reducing all cultivar comparisons to p-values.
+
+## Publication workflow
+
+```{r, eval=FALSE}
+nl_table(f1, "parameters", "gt")
+p <- nl_plot(f1, interval = "confidence")
+nl_save_plot(p, "cultivar_growth.svg", width = 180, height = 120, units = "mm")
+```
+
+```{r eval=FALSE}
+nl_bayes_diagnose(bm)
+# With two scientifically plausible Bayesian models:
+# nl_bayes_compare(list(Model1=bm, Model2=bm_alt), method="stacking")
+```

@@ -1,0 +1,35 @@
+package,role,official_source,verified_on
+stats,Classical nonlinear least squares,https://stat.ethz.ch/R-manual/R-devel/library/stats/html/nls.html,2026-08-17
+minpack.lm,Bounded Levenberg-Marquardt nonlinear least squares,https://cran.r-project.org/package=minpack.lm,2026-08-17
+nls.multstart,Multistart nonlinear least squares,https://cran.r-project.org/package=nls.multstart,2026-08-17
+GA,Global genetic-algorithm starting-value search,https://cran.r-project.org/package=GA,2026-08-17
+nlme,GNLS and nonlinear mixed effects,https://cran.r-project.org/package=nlme,2026-08-17
+robustbase,Resistant nonlinear regression,https://cran.r-project.org/package=robustbase,2026-08-17
+quantreg,Nonlinear quantile regression,https://cran.r-project.org/package=quantreg,2026-08-17
+brms,Bayesian nonlinear and multilevel models,https://paulbuerkner.com/brms/,2026-08-17
+loo,PSIS-LOO and stacking,https://mc-stan.org/loo/,2026-08-17
+saemix,SAEM nonlinear mixed effects,https://cran.r-project.org/package=saemix,2026-08-17
+qrNLMM,Nonlinear mixed-effects quantile regression,https://cran.r-project.org/package=qrNLMM,2026-08-17
+RTMB,R-native TMB automatic differentiation and Laplace approximation,https://cran.r-project.org/package=RTMB,2026-08-17
+BayesRTMB,Bayesian inference using RTMB,https://cran.r-project.org/package=BayesRTMB,2026-08-17
+ctsmTMB,Continuous-time stochastic state-space models,https://cran.r-project.org/package=ctsmTMB,2026-08-17
+DiceKriging,Gaussian-process discrepancy and surrogate models,https://cran.r-project.org/package=DiceKriging,2026-08-17
+reticulate,Python interoperability for optional PySR adapter,https://rstudio.github.io/reticulate/,2026-08-17
+PySR,Symbolic-regression hypothesis generation,https://ai.damtp.cam.ac.uk/pysr/v1.5.9/,2026-08-17
+nlstools,Beale confidence regions and nonlinear diagnostics,https://cran.r-project.org/package=nlstools,2026-08-17
+IPEC,RMS intrinsic and parameter-effects curvature,https://cran.r-project.org/package=IPEC,2026-08-17
+nlraa,Agricultural nonlinear regression utilities,https://cran.r-project.org/package=nlraa,2026-08-17
+deSolve,ODE integration,https://cran.r-project.org/package=deSolve,2026-08-17
+nlmixr2,ODE-based nonlinear mixed effects,https://cran.r-project.org/package=nlmixr2,2026-08-17
+rxode2,Compiled ODE simulation infrastructure,https://cran.r-project.org/package=rxode2,2026-08-17
+drc,Dose-response analysis ecosystem,https://cran.r-project.org/package=drc,2026-08-17
+emmeans,Contrasts and marginal-estimand infrastructure,https://cran.r-project.org/package=emmeans,2026-08-17
+OrdinaryDiffEq,ODE integration for Neural ODE UDE and dynamic control,https://docs.sciml.ai/OrdinaryDiffEq/stable/,2026-08-17
+SciMLSensitivity,Sensitivity analysis and differentiation through differential equation solves,https://docs.sciml.ai/SciMLSensitivity/stable/,2026-08-17
+Lux,Neural-network definition for SciML models,https://lux.csail.mit.edu/stable/,2026-08-17
+NeuralPDE,Physics-informed neural differential equations and PINNs,https://docs.sciml.ai/NeuralPDE/stable/,2026-08-17
+ModelingToolkit,Symbolic modeling infrastructure for differential equations,https://docs.sciml.ai/ModelingToolkit/stable/,2026-08-17
+Optimization,Unified optimization interface for SciML training and control,https://docs.sciml.ai/Optimization/stable/,2026-08-17
+SymbolicRegression,Symbolic regression for learned-mechanism discovery,https://ai.damtp.cam.ac.uk/symbolicregression/stable/,2026-08-17
+ComponentArrays,Structured parameter arrays for scientific machine learning,https://sciml.github.io/ComponentArrays.jl/stable/,2026-08-17
+StableRNGs,Reproducible Julia random-number streams for examples and tests,https://github.com/JuliaRandom/StableRNGs.jl,2026-08-17

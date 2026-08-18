@@ -1,0 +1,25 @@
+\name{nl_control}
+\alias{nl_control}
+\title{Optimize a bounded dynamic control schedule}
+\description{Uses the Julia/SciML model saved by an executed Neural ODE or UDE and optimizes a piecewise-constant control covariate. Agronomic use cases include irrigation and fertigation schedules. The objective balances a terminal target against total input cost.}
+\usage{nl_control(object,control_covariate,control_times,lower,upper,target_state,input_penalty=.01,initial=NULL,maxiters=300,julia=NULL,output_dir=NULL,dry_run=FALSE)}
+\arguments{
+  \item{object}{Executed `nlr_neural_ode` or `nlr_ude` with a saved Julia model.}
+  \item{control_covariate}{Covariate to manipulate, for example `irrigation_mm_d`.}
+  \item{control_times}{Times at which control values may change.}
+  \item{lower}{Lower scalar or vector bound for the control schedule.}
+  \item{upper}{Upper scalar or vector bound for the control schedule.}
+  \item{target_state}{State to maximize at the terminal time.}
+  \item{input_penalty}{Penalty per unit control input.}
+  \item{initial}{Initial control schedule.}
+  \item{maxiters}{Optimization iterations.}
+  \item{julia}{Julia executable.}
+  \item{output_dir}{Output directory.}
+  \item{dry_run}{Return specification only.}
+}
+\value{An `nlr_dynamic_control` object or dry-run specification.}
+\examples{
+d<-subset(nl_data("sciml_crop_growth"),plot_id==unique(nl_data("sciml_crop_growth")$plot_id)[1]);u<-nl_ude(d,"day","biomass_g_m2",c("temperature_C","PAR_MJ_m2_d","soil_water_rel","nitrogen_rel"),template="crop_growth_rue",known_parameters=c(RUE=2.8,Topt=26,Twidth=10,respiration=.01),dry_run=TRUE);nl_control(u,"soil_water_rel",seq(0,98,14),.4,1,"biomass_g_m2",dry_run=TRUE)
+d<-subset(nl_data("sciml_fruit_growth"),fruit_id==unique(nl_data("sciml_fruit_growth")$fruit_id)[1]);u<-nl_ude(d,"day_after_set","fruit_mass_g",c("temperature_C","soil_water_rel"),template="fruit_growth",known_parameters=c(r=.2,K=200),dry_run=TRUE);nl_control(u,"soil_water_rel",seq(0,30,5),.45,.95,"fruit_mass_g",dry_run=TRUE)
+d<-subset(nl_data("sciml_fertility_dynamic"),plot_id==unique(nl_data("sciml_fertility_dynamic")$plot_id)[1]);u<-nl_ude(d,"day",c("plant_N_g_m2","soil_mineral_N_mg_kg"),c("temperature_C","soil_water_rel"),template="nitrogen_uptake",known_parameters=c(vmax=.08,Km=20),dry_run=TRUE);nl_control(u,"soil_water_rel",seq(0,84,14),.4,.95,"plant_N_g_m2",dry_run=TRUE)
+}

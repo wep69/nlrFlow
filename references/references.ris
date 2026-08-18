@@ -1,0 +1,455 @@
+TY  - JOUR
+ID  - Kristensen2016TMB
+AU  - Kasper Kristensen
+AU  - Anders Nielsen
+AU  - Casper W. Berg
+AU  - Hans Skaug
+AU  - Brad M. Bell
+TI  - TMB: Automatic Differentiation and Laplace Approximation
+PY  - 2016
+JO  - Journal of Statistical Software
+VL  - 70
+IS  - 5
+SP  - 1
+EP  - 21
+DO  - 10.18637/jss.v070.i05
+UR  - https://doi.org/10.18637/jss.v070.i05
+N1  - nlrFlow verification topic: automatic differentiation / Laplace
+ER  - 
+
+TY  - JOUR
+ID  - Galarza2020
+AU  - Christian E. Galarza
+AU  - Luis M. Castro
+AU  - Francisco Louzada
+AU  - Victor H. Lachos
+TI  - Quantile regression for nonlinear mixed effects models: a likelihood based perspective
+PY  - 2020
+JO  - Statistical Papers
+VL  - 61
+IS  - 3
+SP  - 1281
+EP  - 1307
+DO  - 10.1007/s00362-018-0988-y
+UR  - https://doi.org/10.1007/s00362-018-0988-y
+N1  - nlrFlow verification topic: nonlinear mixed quantile regression
+ER  - 
+
+TY  - JOUR
+ID  - Burger2025
+AU  - Divan A. Burger
+AU  - Sean van der Merwe
+AU  - Emmanuel Lesaffre
+TI  - A robust mixed-effects quantile regression model using generalized Laplace mixtures to handle outliers and skewness
+PY  - 2025
+JO  - Computational Statistics
+VL  - 40
+IS  - 8
+SP  - 4775
+EP  - 4798
+DO  - 10.1007/s00180-025-01651-0
+UR  - https://doi.org/10.1007/s00180-025-01651-0
+N1  - nlrFlow verification topic: resistant mixed quantiles / cGAL benchmark
+ER  - 
+
+TY  - JOUR
+ID  - Zhang2024
+AU  - Yixin Zhang
+AU  - Wei Liu
+AU  - Lang Wu
+TI  - Order-restricted hypothesis tests for nonlinear mixed-effects models with measurement errors in covariates
+PY  - 2024
+JO  - Canadian Journal of Statistics
+VL  - 52
+IS  - 4
+SP  - e11812
+DO  - 10.1002/cjs.11812
+UR  - https://doi.org/10.1002/cjs.11812
+N1  - nlrFlow verification topic: measurement error in nonlinear mixed effects
+ER  - 
+
+TY  - JOUR
+ID  - Ye2025
+AU  - Qian Ye
+AU  - Lang Wu
+AU  - Viviane Dias Lima
+TI  - Jointly modeling means and variances for nonlinear mixed effects models with measurement errors and outliers
+PY  - 2025
+JO  - Biometrics
+VL  - 81
+IS  - 1
+SP  - ujaf018
+DO  - 10.1093/biomtc/ujaf018
+UR  - https://doi.org/10.1093/biomtc/ujaf018
+N1  - nlrFlow verification topic: joint mean-variance / measurement error / outliers
+ER  - 
+
+TY  - JOUR
+ID  - Heinrich2025
+AU  - Mio Heinrich
+AU  - Marcus Rosenblatt
+AU  - Franz-Georg Wieland
+AU  - Hans Stigter
+AU  - Jens Timmer
+TI  - On structural and practical identifiability: Current status and update of results
+PY  - 2025
+JO  - Current Opinion in Systems Biology
+VL  - 41
+SP  - 100546
+DO  - 10.1016/j.coisb.2025.100546
+UR  - https://doi.org/10.1016/j.coisb.2025.100546
+N1  - nlrFlow verification topic: structural and practical identifiability
+ER  - 
+
+TY  - JOUR
+ID  - Dixit2022
+AU  - Vaibhav Kumar Dixit
+AU  - Christopher Rackauckas
+TI  - GlobalSensitivity.jl: Performant and Parallel Global Sensitivity Analysis with Julia
+PY  - 2022
+JO  - Journal of Open Source Software
+VL  - 7
+IS  - 76
+SP  - 4561
+DO  - 10.21105/joss.04561
+UR  - https://doi.org/10.21105/joss.04561
+N1  - nlrFlow verification topic: global sensitivity / Julia
+ER  - 
+
+TY  - JOUR
+ID  - BubelDesign2025
+AU  - Martin Bubel
+AU  - Philipp Seufert
+AU  - Gleb Karpov
+AU  - Jan Schwientek
+AU  - Michael Bortz
+AU  - Ivan Oseledets
+TI  - Optimal experimental design: from design point to design region
+PY  - 2025
+JO  - Statistical Papers
+VL  - 66
+SP  - 109
+DO  - 10.1007/s00362-025-01725-7
+UR  - https://doi.org/10.1007/s00362-025-01725-7
+N1  - nlrFlow verification topic: optimal experimental design
+ER  - 
+
+TY  - JOUR
+ID  - Ghosh2026PICS
+AU  - Suvrojit Ghosh
+AU  - Koulik Khamaru
+AU  - Tirthankar Dasgupta
+TI  - PICS: A Sequential Approach to Obtain Optimal Designs for Nonlinear Models Leveraging Closed-Form Solutions for Faster Convergence
+PY  - 2026
+JO  - Technometrics
+VL  - 68
+IS  - 2
+SP  - 282
+EP  - 294
+DO  - 10.1080/00401706.2025.2573234
+UR  - https://doi.org/10.1080/00401706.2025.2573234
+N1  - nlrFlow verification topic: sequential nonlinear optimal design
+ER  - 
+
+TY  - JOUR
+ID  - BubelCubature2025
+AU  - Martin Bubel
+AU  - Jochen Schmid
+AU  - Maximilian Carmesin
+AU  - Volodymyr Kozachynskyi
+AU  - Erik Esche
+AU  - Michael Bortz
+TI  - Cubature-based uncertainty estimation for nonlinear regression models
+PY  - 2025
+JO  - Computers & Chemical Engineering
+VL  - 197
+SP  - 109035
+DO  - 10.1016/j.compchemeng.2025.109035
+UR  - https://doi.org/10.1016/j.compchemeng.2025.109035
+N1  - nlrFlow verification topic: nonlinear uncertainty propagation / cubature
+ER  - 
+
+TY  - JOUR
+ID  - Rogers2024
+AU  - Alexander W. Rogers
+AU  - Amanda Lane
+AU  - Cesar Mendoza
+AU  - Simon Watson
+AU  - Adam Kowalski
+AU  - Philip Martin
+AU  - Dongda Zhang
+TI  - Integrating knowledge-guided symbolic regression and model-based design of experiments to automate process flow diagram development
+PY  - 2024
+JO  - Chemical Engineering Science
+VL  - 300
+SP  - 120580
+DO  - 10.1016/j.ces.2024.120580
+UR  - https://doi.org/10.1016/j.ces.2024.120580
+N1  - nlrFlow verification topic: knowledge-guided symbolic regression / model-based design
+ER  - 
+
+TY  - ELEC
+ID  - Cranmer2023
+AU  - Miles Cranmer
+TI  - Interpretable Machine Learning for Science with PySR and SymbolicRegression.jl
+PY  - 2023
+JO  - arXiv
+UR  - https://arxiv.org/abs/2305.01582
+N1  - nlrFlow verification topic: symbolic regression / PySR
+ER  - 
+
+TY  - CPAPER
+ID  - Cordier2023MAPIE
+AU  - Thibault Cordier
+AU  - Vincent Blot
+AU  - Louis Lacombe
+AU  - Thomas Morzadec
+AU  - Arnaud Capitaine
+AU  - Nicolas Brunel
+TI  - Flexible and Systematic Uncertainty Estimation with Conformal Prediction via the MAPIE library
+PY  - 2023
+JO  - Proceedings of the Twelfth Symposium on Conformal and Probabilistic Prediction with Applications
+VL  - 204
+SP  - 549
+EP  - 581
+UR  - https://proceedings.mlr.press/v204/cordier23a.html
+N1  - nlrFlow verification topic: conformal prediction / MAPIE
+ER  - 
+
+TY  - JOUR
+ID  - Randahl2026
+AU  - David Randahl
+AU  - Jonathan P. Williams
+AU  - Håvard Hegre
+TI  - Bin-Conditional Conformal Prediction of Fatalities from Armed Conflict
+PY  - 2026
+JO  - Political Analysis
+VL  - 34
+IS  - 1
+SP  - 96
+EP  - 108
+DO  - 10.1017/pan.2025.10010
+UR  - https://doi.org/10.1017/pan.2025.10010
+N1  - nlrFlow verification topic: conditional/bin conformal prediction
+ER  - 
+
+TY  - COMP
+ID  - RTMB2026
+AU  - Kasper Kristensen
+TI  - RTMB: 'R' Bindings for 'TMB'
+PY  - 2026
+JO  - CRAN R package
+VL  - 1.9
+DO  - 10.32614/CRAN.package.RTMB
+UR  - https://CRAN.R-project.org/package=RTMB
+N1  - nlrFlow verification topic: software / automatic differentiation
+ER  - 
+
+TY  - COMP
+ID  - BayesRTMB2026
+AU  - Hiroshi Shimizu
+TI  - BayesRTMB: Bayesian Inference Using 'RTMB'
+PY  - 2026
+JO  - CRAN R package
+VL  - 0.2.4
+DO  - 10.32614/CRAN.package.BayesRTMB
+UR  - https://CRAN.R-project.org/package=BayesRTMB
+N1  - nlrFlow verification topic: software / Bayesian RTMB
+ER  - 
+
+TY  - COMP
+ID  - qrNLMM2025
+AU  - Christian E. Galarza
+AU  - Victor H. Lachos
+TI  - qrNLMM: Quantile Regression for Nonlinear Mixed-Effects Models
+PY  - 2025
+JO  - CRAN R package
+VL  - 4.0
+DO  - 10.32614/CRAN.package.qrNLMM
+UR  - https://CRAN.R-project.org/package=qrNLMM
+N1  - nlrFlow verification topic: software / nonlinear mixed quantiles
+ER  - 
+
+TY  - COMP
+ID  - ctsmTMB2026
+AU  - Phillip Vetter
+AU  - Jan Møller
+AU  - Uffe Thygesen
+AU  - Peder Bacher
+AU  - Henrik Madsen
+TI  - ctsmTMB: Continuous Time Stochastic Modelling using TMB
+PY  - 2026
+JO  - CRAN R package
+VL  - 1.1.1
+DO  - 10.32614/CRAN.package.ctsmTMB
+UR  - https://CRAN.R-project.org/package=ctsmTMB
+N1  - nlrFlow verification topic: software / continuous-time stochastic models
+ER  - 
+
+TY  - COMP
+ID  - pintervals2026
+AU  - David Randahl
+AU  - Jonathan P. Williams
+AU  - Anders Hjort
+TI  - pintervals: Model Agnostic Prediction Intervals
+PY  - 2026
+JO  - CRAN R package
+VL  - 1.1.1
+DO  - 10.32614/CRAN.package.pintervals
+UR  - https://CRAN.R-project.org/package=pintervals
+N1  - nlrFlow verification topic: software / conformal prediction
+ER  - 
+
+TY  - CPAPER
+ID  - Chen2018NeuralODE
+AU  - Tian Qi Chen
+AU  - Yulia Rubanova
+AU  - Jesse Bettencourt
+AU  - David Duvenaud
+TI  - Neural Ordinary Differential Equations
+PY  - 2018
+JO  - Advances in Neural Information Processing Systems 31
+SP  - 6572
+EP  - 6583
+UR  - https://proceedings.neurips.cc/paper/2018/hash/69386f6bb1dfed68692a24c8686939b9-Abstract.html
+N1  - nlrFlow verification topic: Neural ODE
+ER  - 
+
+TY  - JOUR
+ID  - Raissi2019PINN
+AU  - Maziar Raissi
+AU  - Paris Perdikaris
+AU  - George Em Karniadakis
+TI  - Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations
+PY  - 2019
+JO  - Journal of Computational Physics
+VL  - 378
+SP  - 686
+EP  - 707
+DO  - 10.1016/j.jcp.2018.10.045
+UR  - https://doi.org/10.1016/j.jcp.2018.10.045
+N1  - nlrFlow verification topic: PINN foundational method
+ER  - 
+
+TY  - ELEC
+ID  - Rackauckas2020UDE
+AU  - Christopher Rackauckas
+AU  - Yingbo Ma
+AU  - Julius Martensen
+AU  - Collin Warner
+AU  - Kirill Zubov
+AU  - Rohit Supekar
+AU  - Dominic Skinner
+AU  - Ali Ramadhan
+AU  - Alan Edelman
+TI  - Universal Differential Equations for Scientific Machine Learning
+PY  - 2020
+JO  - arXiv
+DO  - 10.48550/arXiv.2001.04385
+UR  - https://arxiv.org/abs/2001.04385
+N1  - nlrFlow verification topic: Universal Differential Equations
+ER  - 
+
+TY  - JOUR
+ID  - Philipps2025UDEReview
+AU  - Maren Philipps
+AU  - Nina Schmid
+AU  - Jan Hasenauer
+TI  - Current state and open problems in universal differential equations for systems biology
+PY  - 2025
+JO  - npj Systems Biology and Applications
+VL  - 11
+SP  - 101
+DO  - 10.1038/s41540-025-00550-w
+UR  - https://doi.org/10.1038/s41540-025-00550-w
+N1  - nlrFlow verification topic: UDE training / identifiability / regularization
+ER  - 
+
+TY  - JOUR
+ID  - Li2025PINNSoil
+AU  - Cunwen Li
+AU  - Yan Zhu
+AU  - Xiaoping Zhang
+AU  - Lili Ju
+AU  - Qiang Luo
+AU  - Hui Feng
+TI  - A Physics-Informed Deep Learning Method With Adaptively Weighted Loss for Modeling Soil Water Flows
+PY  - 2025
+JO  - Water Resources Research
+VL  - 61
+IS  - 9
+SP  - e2024WR039108
+DO  - 10.1029/2024WR039108
+UR  - https://doi.org/10.1029/2024WR039108
+N1  - nlrFlow verification topic: PINN / Richards soil-water flow
+ER  - 
+
+TY  - JOUR
+ID  - Gong2025PINNRichards
+AU  - Xuezi Gong
+AU  - Yuanyuan Zha
+TI  - Physics-Informed Neural Network With Enhanced Parameter-State Coupling for Inverse Modeling of Unsaturated Flow in Heterogeneous Soils
+PY  - 2025
+JO  - Water Resources Research
+VL  - 61
+IS  - 9
+SP  - e2025WR040040
+DO  - 10.1029/2025WR040040
+UR  - https://doi.org/10.1029/2025WR040040
+N1  - nlrFlow verification topic: PINN / heterogeneous unsaturated flow
+ER  - 
+
+TY  - JOUR
+ID  - Qi2026PINNPTF
+AU  - Pengfei Qi
+AU  - Yunquan Wang
+AU  - Rui Ma
+AU  - Jieliang Zhou
+AU  - Harry Vereecken
+AU  - Budiman Minasny
+AU  - Ziyong Sun
+AU  - Gaofeng Zhu
+AU  - Kun Zhang
+TI  - Physics-Informed Neural Networks to Develop Site-Specific Pedotransfer Functions
+PY  - 2026
+JO  - Water Resources Research
+VL  - 62
+IS  - 1
+SP  - e2025WR041265
+DO  - 10.1029/2025WR041265
+UR  - https://doi.org/10.1029/2025WR041265
+N1  - nlrFlow verification topic: physics-informed site-specific pedotransfer functions
+ER  - 
+
+TY  - JOUR
+ID  - Shao2026PlantHeight
+AU  - Yingjie Shao
+AU  - Fred van Eeuwijk
+AU  - Carel F. W. Peeters
+AU  - Olivia Zumsteg
+AU  - Ioannis N. Athanasiadis
+AU  - George van Voorn
+TI  - Physics-Informed Neural Network methods for predicting plant height development
+PY  - 2026
+JO  - Computers and Electronics in Agriculture
+VL  - 251
+SP  - 111988
+DO  - 10.1016/j.compag.2026.111988
+UR  - https://doi.org/10.1016/j.compag.2026.111988
+N1  - nlrFlow verification topic: PINN / longitudinal plant growth
+ER  - 
+
+TY  - ELEC
+ID  - Gress2025SOCUDE
+AU  - Satyanarayana Raju G. V. V.
+AU  - Prathamesh Dinesh Joshi
+AU  - Raj Abhijit Dandekar
+AU  - Rajat Dandekar
+AU  - Sreedath Panat
+TI  - A study of Universal ODE approaches to predicting soil organic carbon
+PY  - 2025
+JO  - arXiv
+DO  - 10.48550/arXiv.2509.24306
+UR  - https://arxiv.org/abs/2509.24306
+N1  - nlrFlow verification topic: UDE / soil organic carbon; preprint
+ER  - 

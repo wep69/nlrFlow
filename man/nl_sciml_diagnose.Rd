@@ -1,0 +1,16 @@
+\name{nl_sciml_diagnose}
+\alias{nl_sciml_diagnose}
+\title{Diagnose Neural ODE, UDE, and PINN fits}
+\description{Combines data-fit error, training stability, physics loss when available, neural-correction magnitude, and seed-to-seed variability into an interpretable diagnostic table.}
+\usage{nl_sciml_diagnose(object,thresholds=c(rmse_ratio=.20,physics_loss=.05,neural_fraction=.50),seed_fits=NULL)}
+\arguments{
+  \item{object}{Executed Neural ODE, UDE, or PINN object.}
+  \item{thresholds}{Named thresholds for `rmse_ratio`, `physics_loss`, and `neural_fraction`.}
+  \item{seed_fits}{Optional list of repeated fits from different seeds.}
+}
+\value{An `nlr_sciml_diagnostics` object.}
+\examples{
+f1<-structure(list(predictions=data.frame(time=0:2,y_observed=c(1,2,3),y_predicted=c(1.1,2.1,2.9)),time="time",states="y",training=data.frame(iteration=1:3,loss=c(1,.2,.05))),class="nlr_neural_ode");nl_sciml_diagnose(f1)
+f2<-structure(list(predictions=data.frame(time=0:2,y_observed=c(1,2,3),y_predicted=c(1,2,3)),time="time",states="y",training=data.frame(iteration=1:2,loss=c(.2,.02)),decomposition=data.frame(known=c(1,1,1),neural=c(.1,.2,.1))),class="nlr_ude");nl_sciml_diagnose(f2)
+f3<-structure(list(predictions=data.frame(time=0:2,y_observed=c(1,2,3),y_predicted=c(1,2.2,2.8)),time="time",states="y",diagnostics=data.frame(metric="physics_loss",value=.01)),class="nlr_pinn");nl_sciml_diagnose(f3)
+}

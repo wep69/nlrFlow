@@ -1,0 +1,64 @@
+---
+title: "Physics-Informed and Neural Dynamics in Plant Physiology"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Physics-Informed and Neural Dynamics in Plant Physiology}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+```
+
+# Why dynamic physiology?
+
+Plant physiological observations frequently couple rapidly changing radiation, vapor-pressure deficit, temperature, stomatal conductance, and assimilation. A static nonlinear light-response curve remains preferable when it answers the question. Neural differential models become useful when the scientific target is the *dynamic adjustment rate* and environmental forcing changes through time.
+
+Recent agricultural work has begun to use physics-informed models for plant-growth dynamics, including plant-height prediction [@Shao2026PlantHeight]. This vignette illustrates how `nlrFlow` keeps a conventional scientific comparator in the analysis rather than assuming the neural model is superior.
+
+# Multistate Neural ODE
+
+```{r node-phys, eval=FALSE}
+phys <- nl_data("sciml_physiology_dynamic")
+p1 <- subset(phys,plant_id==unique(plant_id)[1])
+node <- nl_neural_ode(
+  p1,"hour",c("A_umol_CO2_m2_s","gs_mol_H2O_m2_s"),
+  c("PAR_umol_m2_s","VPD_kPa","leaf_temperature_C","soil_water_rel"),
+  hidden=c(24,24),seed=20260817,maxiters=1400
+)
+nl_plot(node)
+nl_sciml_diagnose(node)
+```
+
+# UDE when physiology is partially known
+
+A preferred research formulation would keep a known light-response or gas-exchange component and let the neural term represent lagged stress effects.
+
+```{r ude-phys, eval=FALSE}
+known_rhs <- c(A_umol_CO2_m2_s="0.002*PAR_umol_m2_s - 0.05*A_umol_CO2_m2_s",
+               gs_mol_H2O_m2_s="0.00015*PAR_umol_m2_s - 0.08*VPD_kPa*gs_mol_H2O_m2_s")
+ude <- nl_ude(
+  p1,"hour",c("A_umol_CO2_m2_s","gs_mol_H2O_m2_s"),
+  c("PAR_umol_m2_s","VPD_kPa","leaf_temperature_C","soil_water_rel"),
+  template="generic",known_rhs=known_rhs,seed=20260818,maxiters=1500
+)
+nl_missing_physics(ude,threshold=.20)
+nl_plot(ude)
+```
+
+The equations in this teaching example are illustrative and are not presented as a validated physiological mechanism. In a research analysis, the known component must come from an appropriate physiological formulation and use consistent units.
+
+# Simple PINN educational comparator
+
+```{r pinn-phys, eval=FALSE}
+# A low-dimensional constrained process before attempting a complex physiological PDE.
+nl_pinn(p1,"logistic_growth","hour","A_umol_CO2_m2_s",parameters=c(r=.2,K=25),seed=20260819)
+nl_pinn(p1,"first_order_nutrient","hour","gs_mol_H2O_m2_s",parameters=c(k=.1,K=.8),seed=20260820)
+nl_pinn(p1,"logistic_growth","hour","gs_mol_H2O_m2_s",parameters=c(r=.15,K=.8),seed=20260821)
+```
+
+# Practical figures and tables
+
+For physiological interpretation, publication figures should show observed trajectories, predicted trajectories, environmental forcing, and the learned correction. Tables should summarize dynamic prediction error and neural contribution rather than network weights. A neural correction peaking during high VPD, for example, is a hypothesis-generating result and requires independent validation before causal interpretation.

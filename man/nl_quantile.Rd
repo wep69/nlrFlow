@@ -1,0 +1,20 @@
+\name{nl_quantile}
+\alias{nl_quantile}
+\title{Fit nonlinear quantile regression}
+\description{Fits nonlinear conditional quantiles through `quantreg::nlrq`, useful when nonlinear effects differ across the response distribution.}
+\usage{nl_quantile(formula,data,start,tau=.5,...)}
+\arguments{
+  \item{formula}{Nonlinear formula.}
+  \item{data}{Data frame.}
+  \item{start}{Named starting values.}
+  \item{tau}{Quantile in (0,1).}
+  \item{...}{Additional arguments to `quantreg::nlrq`.}
+}
+\value{An `nlrfit` with engine `quantile`.}
+\examples{
+\dontrun{
+okra <- nl_data("okra_growth_raw"); nl_quantile(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))),okra,list(Asym=18,k=.4,xmid=4),tau=.5)
+fert <- subset(nl_data("soil_fertility_p"),soil_class=="Clayey"); nl_quantile(grain_yield_Mg_ha~Asym-delta*exp(-k*P2O5_kg_ha),fert,list(Asym=9,delta=5,k=.03),tau=.9)
+soil <- subset(nl_data("soil_infiltration"),management=="CoverCrop"); nl_quantile(cumulative_infiltration_mm~Vmax*time_min/(Km+time_min),soil,list(Vmax=145,Km=34),tau=.1)
+}
+}

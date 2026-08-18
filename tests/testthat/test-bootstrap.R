@@ -1,0 +1,1 @@
+test_that("small bootstrap records convergence", { d<-nl_simulate("gompertz",1:20,c(Asym=18,k=.44,xmid=3.7),sigma=.1,seed=5);f<-nl_fit(data=d,model="gompertz",response="y",predictor="x",engine="nls");b<-nl_boot(f,R=10,seed=6);expect_equal(nrow(b$coefficients),10);expect_true(any(b$converged)) })

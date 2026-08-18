@@ -1,0 +1,22 @@
+\name{nl_next_measurement}
+\alias{nl_next_measurement}
+\title{Select the next informative nonlinear measurement}
+\description{Chooses one new predictor value by adding candidate Fisher information to an existing local design. It is intended for sequential sampling after an interim fit has updated the nominal parameters.}
+\usage{nl_next_measurement(formula,data_template,parameters,predictor,candidates,existing, criterion=c("D","A","E","c"),sigma=1,c_vector=NULL)}
+\arguments{
+  \item{formula}{Nonlinear response formula.}
+  \item{data_template}{One-row covariate template.}
+  \item{parameters}{Current named parameter estimates.}
+  \item{predictor}{Predictor column.}
+  \item{candidates}{Candidate new predictor values.}
+  \item{existing}{Existing predictor values.}
+  \item{criterion}{Optimality criterion.}
+  \item{sigma}{Residual SD.}
+  \item{c_vector}{Contrast for c-optimality.}
+}
+\value{The one-point `nlr_design` result.}
+\examples{
+o<-nl_data("okra_growth_means"); nl_next_measurement(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))),o[1,,drop=FALSE],c(Asym=18,k=.4,xmid=4),"day_after_flowering",1:25,o$day_after_flowering)
+f<-subset(nl_data("soil_fertility_p"),soil_class=="Loamy"); nl_next_measurement(grain_yield_Mg_ha~Asym-delta*exp(-k*P2O5_kg_ha),f[1,,drop=FALSE],c(Asym=8,delta=5,k=.02),"P2O5_kg_ha",seq(0,300,10),f$P2O5_kg_ha)
+p<-subset(nl_data("plant_physiology_light"),water_regime=="WellWatered"); nl_next_measurement(A_umol_CO2_m2_s~Amax*alpha*PAR_umol_m2_s/(Amax+alpha*PAR_umol_m2_s)-Rd,p[1,,drop=FALSE],c(Amax=30,alpha=.06,Rd=1),"PAR_umol_m2_s",seq(0,2000,100),p$PAR_umol_m2_s)
+}

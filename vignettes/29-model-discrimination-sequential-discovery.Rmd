@@ -1,0 +1,46 @@
+---
+title: "Model Discrimination and Sequential Experiment Discovery"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Model Discrimination and Sequential Experiment Discovery}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+```
+
+# Do not force an ANOVA between non-nested equations
+
+`nl_discriminate()` combines AICc, cross-validation, explicit shape constraints and prediction disagreement. It does not manufacture a likelihood-ratio test for unrelated equations.
+
+```{r discriminate, eval=FALSE}
+o<-nl_data("okra_growth_means");do<-nl_discover(o,"fruit_length","day_after_flowering",c("gompertz","logistic","richards"),engine="nls");co<-nl_discriminate(do,"day_after_flowering")
+f<-subset(nl_data("soil_fertility_p"),soil_class=="Loamy");df<-nl_discover(f,"grain_yield_Mg_ha","P2O5_kg_ha",c("mitscherlich","michaelis_menten"),engine="nls");cf<-nl_discriminate(df,"P2O5_kg_ha")
+s<-subset(nl_data("soil_p_sorption"),soil_class=="Clayey");ds<-nl_discover(s,"sorbed_P_mg_kg","solution_P_mg_L",c("langmuir","freundlich"),engine="nls");cs<-nl_discriminate(ds,"solution_P_mg_L")
+```
+
+# Ask which new observation would separate the models
+
+When several models remain scientifically plausible, the next measurement should preferably be taken where they make different predictions. `nl_sequential_discovery()` calculates a T-optimal-like weighted model-disagreement score divided by average residual variance.
+
+```{r sequential, eval=FALSE}
+nl_sequential_discovery(do,o[1,,drop=FALSE],"day_after_flowering",1:25,existing=o$day_after_flowering,n_points=2)
+nl_sequential_discovery(df,f[1,,drop=FALSE],"P2O5_kg_ha",seq(0,300,10),existing=f$P2O5_kg_ha,n_points=2)
+nl_sequential_discovery(ds,s[1,,drop=FALSE],"solution_P_mg_L",seq(0,max(s$solution_P_mg_L)*1.2,length=50),existing=s$solution_P_mg_L,n_points=2)
+```
+
+This closes the scientific loop:
+
+1. fit mechanistically plausible models;
+2. let symbolic regression suggest additional parsimonious hypotheses;
+3. reject candidates that violate scientific constraints;
+4. quantify remaining model disagreement;
+5. collect the most discriminating new observation;
+6. refit and repeat until structural ambiguity is scientifically negligible.
+
+## Method references
+
+Sequential nonlinear design is compared conceptually with @Ghosh2026PICS, while the knowledge-discovery loop is motivated by @Rogers2024. `nl_sequential_discovery()` uses predictive disagreement and is not an implementation of PICS.

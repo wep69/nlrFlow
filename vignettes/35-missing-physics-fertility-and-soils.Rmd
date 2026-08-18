@@ -1,0 +1,63 @@
+---
+title: "Missing-Physics Discovery in Soil Fertility and Soil Processes"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{Missing-Physics Discovery in Soil Fertility and Soil Processes}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+```
+
+# From residual pattern to a process hypothesis
+
+`nl_missing_physics()` is deliberately more conservative than naming the neural term a new mechanism. It decomposes an executed UDE into known, neural, and total derivative contributions and flags intervals where the neural fraction is substantial. The output is a *diagnostic for missing process representation*.
+
+# 1. Nitrogen dynamics
+
+```{r n, eval=FALSE}
+fert <- nl_data("sciml_fertility_dynamic")
+f1 <- subset(fert,plot_id==unique(plot_id)[1])
+ude_n <- nl_ude(
+  f1,"day",c("plant_N_g_m2","soil_mineral_N_mg_kg"),
+  c("temperature_C","soil_water_rel"),template="nitrogen_uptake",
+  known_parameters=c(vmax=.08,Km=20),seed=20260817,maxiters=1600
+)
+miss_n <- nl_missing_physics(ude_n,state="plant_N_g_m2",threshold=.25)
+nl_plot(miss_n)
+nl_table(miss_n)
+```
+
+Interpret high neural contribution in relation to temperature, water status, growth stage, and measurement support. It may represent omitted mineralization, root activity, immobilization, or simply misspecified known dynamics.
+
+# 2. Crop biomass and nutrient limitation
+
+```{r crop, eval=FALSE}
+crop <- nl_data("sciml_crop_growth")
+c1 <- subset(crop,plot_id==unique(plot_id)[1])
+ude_c <- nl_ude(c1,"day","biomass_g_m2",
+  c("temperature_C","PAR_MJ_m2_d","soil_water_rel","nitrogen_rel"),
+  template="crop_growth_rue",known_parameters=c(RUE=2.8,Topt=26,Twidth=10,respiration=.01),seed=20260818)
+miss_c <- nl_missing_physics(ude_c,state="biomass_g_m2",threshold=.20)
+nl_plot(miss_c)
+```
+
+# 3. Soil organic carbon template
+
+```{r soc, eval=FALSE}
+# The soil_carbon template is available for a user-supplied longitudinal SOC dataset.
+# Here dry_run documents the complete backend specification without pretending that
+# the teaching package contains a validated long-term SOC experiment.
+soc_demo <- data.frame(day=c(0,30,60,90),SOC=c(20,19.6,19.3,19.1),temperature_C=c(20,22,24,22),soil_water_rel=c(.65,.60,.55,.62))
+ude_soc <- nl_ude(soc_demo,"day","SOC",c("temperature_C","soil_water_rel"),template="soil_carbon",known_parameters=c(k=.002,Q10=2),dry_run=TRUE)
+# A decomposition becomes available after executing the SciML backend.
+```
+
+Recent work has explored UDEs for soil organic carbon, but the cited current example is a preprint and should be treated as emerging evidence rather than a settled agronomic standard [@Gress2025SOCUDE].
+
+# Practical decision rule
+
+A neural correction is scientifically interesting when it is: reproducible across seeds, concentrated in interpretable environmental or phenological regions, retained under validation, smaller than the total dynamics for much of the domain, and capable of being approximated by a parsimonious symbolic expression. If not, it is primarily evidence of model inadequacy, not evidence for a new biological law.

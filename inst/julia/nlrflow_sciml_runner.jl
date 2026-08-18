@@ -85,18 +85,25 @@ function train_neural_ode(df, cfg, outdir; ude=false)
     lr = Float64(jget(cfg,"learning_rate",0.01)); refine = Bool(jget(cfg,"refine",true)); act = String(jget(cfg,"activation","tanh"))
     scale = Float64(jget(cfg,"neural_scale",1.0)); weight_decay = Float64(jget(cfg,"weight_decay",0.0))
     rng = StableRNG(seed); model = make_model(length(states)+length(covs)+1,hidden,length(states),act); ps,st = Lux.setup(rng,model); p0=ComponentArray(ps)
-    known_rhs = String[]; kp = Dict{String,Float64}()
+    known_rhs = String[]; kp = Dict{String,Float64}(); known_rhs_fn = nothing
     if ude
         known_rhs = strvec(jget(cfg,"known_rhs"))
         kpobj = jget(cfg,"known_parameters", Dict())
         for (k,v) in pairs(kpobj); kp[String(k)] = Float64(v); end
-        src = "function nlr_known_rhs(u,cov,kp,t)\nreturn [" * join(known_rhs, ",") * "]\nend"
-        Core.eval(Main, Meta.parse(src))
+        # Build a local closure to avoid world-age issues with Julia 1.12 + Zygote
+        exprs = [Meta.parse(e) for e in known_rhs]
+        known_rhs_fn = function(u, cv, kp, t)
+            results = Vector{Float64}(undef, length(exprs))
+            for (i, ex) in enumerate(exprs)
+                results[i] = Float64(Base.eval(Main, :(let u=$u, cov=$cv, kp=$kp, t=$t; $ex end)))
+            end
+            results
+        end
     end
     function rhs!(du,u,p,t)
         cv = covdict(covs,times,C,t); inp=nn_input(u,cv,covs,t); nn,_=model(inp,p,st)
         if ude
-            du .= nlr_known_rhs(u,cv,kp,t) .+ scale .* nn
+            du .= known_rhs_fn(u,cv,kp,t) .+ scale .* nn
         else
             du .= nn
         end
@@ -125,7 +132,7 @@ function train_neural_ode(df, cfg, outdir; ude=false)
     if ude
         rows=NamedTuple[]
         for j in eachindex(times)
-            u=vec(pred[:,j]); cv=covdict(covs,times,C,times[j]); nn,_=model(nn_input(u,cv,covs,times[j]),pfit,st); kn=nlr_known_rhs(u,cv,kp,times[j])
+            u=vec(pred[:,j]); cv=covdict(covs,times,C,times[j]); nn,_=model(nn_input(u,cv,covs,times[j]),pfit,st); kn=known_rhs_fn(u,cv,kp,times[j])
             for i in eachindex(states)
                 base=(time=times[j],state=states[i],observed=Y[i,j],fitted=u[i],known=kn[i],neural=scale*nn[i],total=kn[i]+scale*nn[i])
                 extra=NamedTuple{Tuple(Symbol.(covs))}(Tuple(cv[nm] for nm in covs))

@@ -45,7 +45,6 @@ Suggests:
     quantreg,
     brms,
     loo,
-    cmdstanr,
     saemix,
     deSolve,
     rxode2,

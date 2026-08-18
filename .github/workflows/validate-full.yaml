@@ -16,7 +16,7 @@ jobs:
       - uses: r-lib/actions/setup-pandoc@v2
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck, any::sessioninfo, any::testthat
+          extra-packages: any::devtools, any::rcmdcheck, any::sessioninfo, any::testthat, any::digest
           needs: check
       - name: Run validation pipeline
         run: |

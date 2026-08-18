@@ -26,6 +26,40 @@ The scientific objective is not to hide methodology behind a single black-box es
 9. Make sequential design decisions explicit and reproducible.
 10. Record method choices, constraints and failed alternatives in the audit trail.
 
+## Installation
+
+### From GitHub (recommended)
+
+```r
+# Install remotes if not already installed
+install.packages("remotes")
+
+# Install from GitHub WITHOUT building vignettes (fast)
+remotes::install_github("wep69/nlrFlow", build_vignettes = FALSE)
+
+# Install from GitHub WITH vignettes (slower, requires Pandoc)
+remotes::install_github("wep69/nlrFlow", build_vignettes = TRUE)
+```
+
+### Using pak (faster alternative)
+
+```r
+install.packages("pak")
+
+# Without vignettes
+pak::pak("wep69/nlrFlow")
+
+# With vignettes (requires Pandoc)
+pak::pak("wep69/nlrFlow", dependencies = TRUE)
+```
+
+### Verify installation
+
+```r
+library(nlrFlow)
+packageVersion("nlrFlow")
+```
+
 ## Quick start
 
 ```r

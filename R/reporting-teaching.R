@@ -30,7 +30,7 @@ nl_plot <- function(object,newdata=NULL,interval="confidence",level=.95,x=NULL,y
   }
   if(identical(object$engine,"brms") && (is.null(x) || is.null(y))) stop("For Bayesian brms fits, specify x= and y= explicitly in nl_plot().",call.=FALSE)
   y <- y %||% .nl_response_name(object$formula)
-  if(is.null(x)){v <- .nl_predictor_names(object$formula); x <- v[vapply(object$data[v],is.numeric,logical(1))][1]}
+  if(is.null(x)){v <- .nl_predictor_names(object$formula); v <- v[v %in% names(object$data)]; x <- v[vapply(object$data[v],is.numeric,logical(1))][1]}
   if(is.null(x) || is.na(x) || !x %in% names(object$data)) stop("Specify a valid numeric x variable.",call.=FALSE)
   if(!is.null(group) && !group %in% names(object$data)) stop("group is not present in the fitted data.",call.=FALSE)
   if(is.null(newdata)) {

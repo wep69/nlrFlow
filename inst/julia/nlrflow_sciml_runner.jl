@@ -96,7 +96,7 @@ function train_neural_ode(df, cfg, outdir; ude=false)
     function rhs!(du,u,p,t)
         cv = covdict(covs,times,C,t); inp=nn_input(u,cv,covs,t); nn,_=model(inp,p,st)
         if ude
-            du .= nlr_known_rhs(u,cv,kp,t) .+ scale .* nn
+            du .= Base.invokelatest(nlr_known_rhs,u,cv,kp,t) .+ scale .* nn
         else
             du .= nn
         end
@@ -125,7 +125,7 @@ function train_neural_ode(df, cfg, outdir; ude=false)
     if ude
         rows=NamedTuple[]
         for j in eachindex(times)
-            u=vec(pred[:,j]); cv=covdict(covs,times,C,times[j]); nn,_=model(nn_input(u,cv,covs,times[j]),pfit,st); kn=nlr_known_rhs(u,cv,kp,times[j])
+            u=vec(pred[:,j]); cv=covdict(covs,times,C,times[j]); nn,_=model(nn_input(u,cv,covs,times[j]),pfit,st); kn=Base.invokelatest(nlr_known_rhs,u,cv,kp,times[j])
             for i in eachindex(states)
                 base=(time=times[j],state=states[i],observed=Y[i,j],fitted=u[i],known=kn[i],neural=scale*nn[i],total=kn[i]+scale*nn[i])
                 extra=NamedTuple{Tuple(Symbol.(covs))}(Tuple(cv[nm] for nm in covs))

@@ -90,10 +90,19 @@ function train_neural_ode(df, cfg, outdir; ude=false)
         known_rhs = strvec(jget(cfg,"known_rhs"))
         kpobj = jget(cfg,"known_parameters", Dict())
         for (k,v) in pairs(kpobj); kp[String(k)] = Float64(v); end
-        # Build a local closure to avoid world-age issues with Julia 1.12 + Zygote
-        exprs = [Meta.parse(e) for e in known_rhs]
-        known_rhs_fn = function(u, cv, kp, t)
-            Float64[Float64(Base.eval(Main, :(let u=$u, cov=$cv, kp=$kp, t=$t; $ex end))) for ex in exprs]
+        template = String(jget(cfg,"template","generic"))
+        if template == "fruit_growth"
+            known_rhs_fn = (u, cv, kp, t) -> [kp["r"]*u[1]*(1.0 - u[1]/kp["K"])*cv["soil_water_rel"]]
+        elseif template == "crop_growth_rue"
+            known_rhs_fn = (u, cv, kp, t) -> [kp["RUE"]*cv["PAR_MJ_m2_d"]*exp(-((cv["temperature_C"]-kp["Topt"])/kp["Twidth"])^2)*cv["soil_water_rel"] - kp["respiration"]*u[1]]
+        elseif template == "nitrogen_uptake"
+            known_rhs_fn = (u, cv, kp, t) -> [kp["vmax"]*u[2]/(kp["Km"]+u[2])*cv["soil_water_rel"], -kp["vmax"]*u[2]/(kp["Km"]+u[2])*cv["soil_water_rel"]]
+        elseif template == "soil_carbon"
+            known_rhs_fn = (u, cv, kp, t) -> [-kp["k"]*u[1]*(kp["Q10"]^((cv["temperature_C"]-20.0)/10.0))*cv["soil_water_rel"]]
+        else
+            # Generic: evaluate expressions (not differentiable with Zygote)
+            exprs = [Meta.parse(e) for e in known_rhs]
+            known_rhs_fn = (u, cv, kp, t) -> Float64[Base.eval(Main, :(let u=$u, cov=$cv, kp=$kp, t=$t; $ex end)) for ex in exprs]
         end
     end
     function rhs!(du,u,p,t)

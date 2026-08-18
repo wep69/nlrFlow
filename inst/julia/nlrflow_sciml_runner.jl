@@ -93,11 +93,7 @@ function train_neural_ode(df, cfg, outdir; ude=false)
         # Build a local closure to avoid world-age issues with Julia 1.12 + Zygote
         exprs = [Meta.parse(e) for e in known_rhs]
         known_rhs_fn = function(u, cv, kp, t)
-            results = Vector{Float64}(undef, length(exprs))
-            for (i, ex) in enumerate(exprs)
-                results[i] = Float64(Base.eval(Main, :(let u=$u, cov=$cv, kp=$kp, t=$t; $ex end)))
-            end
-            results
+            Float64[Float64(Base.eval(Main, :(let u=$u, cov=$cv, kp=$kp, t=$t; $ex end))) for ex in exprs]
         end
     end
     function rhs!(du,u,p,t)

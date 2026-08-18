@@ -1,12 +1,33 @@
 #' Interactive analysis wizard
 #'
 #' Guides the user through a complete nlrFlow analysis interactively.
-#' When called without arguments, presents a menu-driven interface.
+#' When called without arguments, presents a menu-driven interface that walks
+#' through data loading, audit, model fitting, diagnostics, prediction, and
+#' visualization.
 #'
-#' @param data Optional data frame to start with
-#' @param response Optional response column name
-#' @param predictor Optional predictor column name
-#' @return Invisibly returns the last fitted model object
+#' The wizard is ideal for beginners who are not yet familiar with the nlrFlow
+#' API. It can also be called with pre-specified arguments for semi-automated
+#' workflows.
+#'
+#' @param data Optional data frame to start with. If NULL, the user is prompted
+#'   to select from built-in teaching datasets.
+#' @param response Optional response column name. If NULL, the user is prompted
+#'   to enter it interactively.
+#' @param predictor Optional predictor column name. If NULL, the user is prompted
+#'   to enter it interactively.
+#' @return Invisibly returns the last fitted \code{nlrfit} model object.
+#' @examples
+#' \dontrun{
+#' # Interactive mode
+#' nl_wizard()
+#'
+#' # Semi-automated with pre-specified data
+#' nl_wizard(data = nl_data("okra_growth_means"),
+#'           response = "fruit_length",
+#'           predictor = "day_after_flowering")
+#' }
+#' @seealso \code{\link{nl_data}}, \code{\link{nl_audit}}, \code{\link{nl_fit}},
+#'   \code{\link{nl_diagnose}}, \code{\link{nl_plot}}
 #' @export
 nl_wizard <- function(data = NULL, response = NULL, predictor = NULL) {
   cat("╔══════════════════════════════════════╗\n")

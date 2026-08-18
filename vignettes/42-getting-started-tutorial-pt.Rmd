@@ -1,0 +1,152 @@
+---
+title: "Introducao ao nlrFlow: Tutorial Pratico"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introducao ao nlrFlow: Tutorial Pratico}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5
+)
+set.seed(20260817)
+```
+
+## Visao geral
+
+`nlrFlow` fornece um fluxo de trabalho integrado para regressao nao linear em agronomia e ciencias naturais. Este tutorial apresenta uma analise completa: desde a exploracao dos dados ate o ajuste de modelos, diagnosticas, comparacao e resultados prontos para publicacao.
+
+## 1. Carregar o pacote e explorar dados
+
+```{r load-data}
+library(nlrFlow)
+okra <- nl_data("okra_growth_means")
+head(okra)
+```
+
+## 2. Auditar os dados
+
+Antes de ajustar, audite a estrutura:
+
+```{r audit}
+nl_audit(okra, "fruit_length", "day_after_flowering")
+```
+
+## 3. Gerar valores iniciais
+
+`nl_start()` cria valores iniciais informados pelos dados para modelos registrados:
+
+```{r start-values}
+nl_start(okra, "fruit_length", "day_after_flowering", "gompertz")
+nl_start(okra, "fruit_length", "day_after_flowering", "logistic")
+```
+
+## 4. Ajustar modelos
+
+Ajuste o modelo Gompertz usando Levenberg-Marquardt:
+
+```{r fit-gompertz}
+f_gomp <- nl_fit(
+  data = okra, model = "gompertz",
+  response = "fruit_length", predictor = "day_after_flowering",
+  engine = "nlsLM"
+)
+summary(f_gomp)
+```
+
+Ajuste multiplos modelos candidatos:
+
+```{r fit-many}
+fits <- nl_fit_many(
+  okra, "fruit_length", "day_after_flowering",
+  c("logistic", "gompertz", "richards"), engine = "nlsLM"
+)
+```
+
+## 5. Comparar modelos
+
+```{r compare}
+nl_compare(fits)
+```
+
+## 6. Diagnosticas
+
+```{r diagnose}
+nl_diagnose(f_gomp)
+```
+
+## 7. Predicoes e intervalos de confianca
+
+```{r predict}
+pred <- nl_predict(f_gomp, interval = "confidence")
+head(pred)
+```
+
+## 8. Quantidades derivadas
+
+Calcule a taxa de crescimento absoluto, taxa relativa, ponto de inflexao e area sob a curva:
+
+```{r derive}
+d <- nl_derive(f_gomp)
+d$summary
+```
+
+## 9. Grafico
+
+```{r plot, fig.cap="Ajuste Gompertz ao crescimento do fruto de quiabo"}
+nl_plot(f_gomp)
+```
+
+## 10. Assistente interativo
+
+Para iniciantes, `nl_wizard()` oferece uma experiencia guiada e interativa:
+
+```{r wizard, eval=FALSE}
+# Modo totalmente interativo
+nl_wizard()
+
+# Semi-automatico com dados pre-especificados
+nl_wizard(
+  data = nl_data("okra_growth_means"),
+  response = "fruit_length",
+  predictor = "day_after_flowering"
+)
+```
+
+O assistente guia o usuario atraves da carga de dados, auditoria, ajuste de modelos, diagnosticas, predicoes e graficos de forma interativa.
+
+## 11. Exportar um relatorio
+
+```{r report, eval=FALSE}
+nl_report(f_gomp, file = "nlrFlow_report.md")
+```
+
+## Resumo
+
+Este tutorial demonstrou o fluxo de trabalho central do `nlrFlow`:
+
+1. **Auditoria de dados** com `nl_audit()`
+2. **Valores iniciais** com `nl_start()`
+3. **Ajuste de modelos** com `nl_fit()` e `nl_fit_many()`
+4. **Comparacao de modelos** com `nl_compare()`
+5. **Diagnosticas** com `nl_diagnose()`
+6. **Predicoes** com `nl_predict()`
+7. **Quantidades derivadas** com `nl_derive()`
+8. **Visualizacao** com `nl_plot()`
+9. **Assistente interativo** com `nl_wizard()` para iniciantes
+10. **Relatorio** com `nl_report()`
+
+Para uma lista completa de funcoes, veja `?nlrFlow` ou digite `?nl_models` no prompt do R.
+
+## Como citar
+
+```{r citation, eval=FALSE}
+citation("nlrFlow")
+packageVersion("nlrFlow")
+R.version.string
+```

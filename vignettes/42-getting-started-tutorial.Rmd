@@ -94,7 +94,26 @@ d$summary
 nl_plot(f_gomp)
 ```
 
-## 10. Export a report
+## 10. Interactive wizard
+
+For beginners, `nl_wizard()` provides a guided, menu-driven experience:
+
+```{r wizard, eval=FALSE}
+# Full interactive mode
+nl_wizard()
+
+# Semi-automated with pre-specified data
+nl_wizard(
+  data = nl_data("okra_growth_means"),
+  response = "fruit_length",
+  predictor = "day_after_flowering"
+)
+```
+
+The wizard walks through data loading, audit, model fitting, diagnostics,
+prediction, and plotting interactively.
+
+## 11. Export a report
 
 ```{r report, eval=FALSE}
 nl_report(f_gomp, file = "nlrFlow_report.md")
@@ -112,7 +131,10 @@ This tutorial demonstrated the core `nlrFlow` workflow:
 6. **Predictions** with `nl_predict()`
 7. **Derived quantities** with `nl_derive()`
 8. **Visualization** with `nl_plot()`
-9. **Reporting** with `nl_report()`
+9. **Interactive wizard** with `nl_wizard()` for beginners
+10. **Reporting** with `nl_report()`
+
+For a complete list of functions, see `?nlrFlow` or type `?nl_models` at the R prompt.
 
 ## How to cite
 

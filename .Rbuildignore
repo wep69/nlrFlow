@@ -17,3 +17,5 @@
 ^data-raw/
 ^tools/
 ^cheatsheet/
+^doc$
+^Meta$

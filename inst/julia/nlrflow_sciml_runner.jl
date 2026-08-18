@@ -4,10 +4,10 @@
 using CSV, DataFrames, JSON3, Statistics, LinearAlgebra, Random, StableRNGs, Serialization
 using Lux, ComponentArrays, OrdinaryDiffEq, SciMLSensitivity
 using Optimization, OptimizationOptimisers, OptimizationOptimJL
-using Zygote, Optim
+using Zygote, Optim, NeuralPDE, LineSearches, SymbolicRegression
 
 jget(x, k::AbstractString, default=nothing) = haskey(x, Symbol(k)) ? x[Symbol(k)] : (haskey(x, k) ? x[k] : default)
-strvec(x) = x === nothing ? String[] : String.(collect(x))
+strvec(x) = x === nothing ? String[] : (x isa AbstractString ? String[x] : String[string(c) for c in x])
 floatvec(x) = x === nothing ? Float64[] : Float64.(collect(x))
 intvec(x) = x === nothing ? Int[] : Int.(collect(x))
 
@@ -141,7 +141,6 @@ function train_neural_ode(df, cfg, outdir; ude=false)
 end
 
 function richards_runner(df,cfg,outdir)
-    using NeuralPDE, Optim, LineSearches
     tname=String(jget(cfg,"time")); yname=String(jget(cfg,"response")); zname=String(jget(cfg,"depth")); parsobj=jget(cfg,"parameters")
     pars=Dict{String,Float64}();for (k,v) in pairs(parsobj);pars[String(k)]=Float64(v);end
     times=sort(unique(Float64.(df[!,Symbol(tname)]))); depths=sort(unique(Float64.(df[!,Symbol(zname)])))
@@ -217,7 +216,6 @@ end
 function pinn_runner(df,cfg,outdir)
     problem=String(jget(cfg,"problem"))
     problem=="richards_1d" && return richards_runner(df,cfg,outdir)
-    using NeuralPDE, Optim, LineSearches
     tname=String(jget(cfg,"time")); yname=String(jget(cfg,"response"));sort!(df,Symbol(tname));times=Float64.(df[!,Symbol(tname)]);y=Float64.(df[!,Symbol(yname)])
     pobj=jget(cfg,"parameters");pars=Dict{String,Float64}();for (k,v) in pairs(pobj);pars[String(k)]=Float64(v);end
     if problem=="logistic_growth"
@@ -261,7 +259,6 @@ function uopfun(name)
 end
 
 function symbolic_runner(df,cfg,outdir)
-    using SymbolicRegression
     # The search is stochastic. Seed Julia's global RNG so the user-requested seed is
     # honored. Multithreaded evolutionary search can still show small platform-level
     # differences, so nlrFlow treats candidates as hypotheses that must be refitted.

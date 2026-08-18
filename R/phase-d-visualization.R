@@ -11,7 +11,7 @@
     }
     if(is.null(x)||is.na(x)||!x%in%names(nd)) stop("Specify x= for the conformal interval plot.",call.=FALSE)
     d <- cbind(nd,object$interval)
-    p <- ggplot2::ggplot(d,ggplot2::aes_string(x=x,y=".prediction")) +
+    p <- ggplot2::ggplot(d,ggplot2::aes(x=.data[[x]],y=.data[[".prediction"]])) +
       ggplot2::geom_ribbon(ggplot2::aes(ymin=.lower,ymax=.upper),alpha=.18) +
       ggplot2::geom_line(linewidth=.8) + ggplot2::theme_classic(base_size=11) +
       ggplot2::labs(y="Prediction",subtitle=object$method)
@@ -21,7 +21,7 @@
     d<-object$indices
     value <- if("ST"%in%names(d)) "ST" else if("mu_star"%in%names(d)) "mu_star" else if("elasticity"%in%names(d)) "elasticity" else names(d)[2]
     d$parameter_plot <- stats::reorder(d$parameter,d[[value]])
-    return(ggplot2::ggplot(d,ggplot2::aes_string(x="parameter_plot",y=value))+
+    return(ggplot2::ggplot(d,ggplot2::aes(x=.data[["parameter_plot"]],y=.data[[value]]))+
       ggplot2::geom_point(size=2.4)+ggplot2::coord_flip()+ggplot2::theme_classic(base_size=11)+
       ggplot2::labs(x="Parameter",y=value,subtitle=paste("Sensitivity method:",object$method)))
   }
@@ -33,7 +33,7 @@
   }
   if(inherits(object,"nlr_candidate_validation")) {
     d<-object$grid;d$.prediction<-object$prediction
-    return(ggplot2::ggplot(d,ggplot2::aes_string(x=object$predictor,y=".prediction"))+
+    return(ggplot2::ggplot(d,ggplot2::aes(x=.data[[object$predictor]],y=.data[[".prediction"]]))+
       ggplot2::geom_line(linewidth=.8)+ggplot2::theme_classic(base_size=11)+
       ggplot2::labs(y="Candidate prediction",subtitle=paste("Scientific checks:",if(object$pass)"PASS" else "FAIL")))
   }

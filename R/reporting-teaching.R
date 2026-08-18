@@ -48,14 +48,14 @@ nl_plot <- function(object,newdata=NULL,interval="confidence",level=.95,x=NULL,y
   points <- raw_data %||% object$data
   if(!all(c(x,y) %in% names(points))) stop("raw_data must contain the plotted x and y columns.",call.=FALSE)
   if(!is.null(group) && !group %in% names(points)) stop("group is not present in plotting data.",call.=FALSE)
-  aes_points <- if(is.null(group)) ggplot2::aes_string(x=x,y=y) else ggplot2::aes_string(x=x,y=y,shape=group)
+  aes_points <- if(is.null(group)) ggplot2::aes(x=.data[[x]],y=.data[[y]]) else ggplot2::aes(x=.data[[x]],y=.data[[y]],shape=.data[[group]])
   p <- ggplot2::ggplot(points,aes_points) + ggplot2::geom_point(alpha=point_alpha,size=point_size) + ggplot2::labs(x=x,y=y) + ggplot2::theme_classic(base_size=11)
   if(is.null(group)) {
-    p <- p + ggplot2::geom_line(data=pr,ggplot2::aes_string(x=x,y=".fitted"),inherit.aes=FALSE,linewidth=.8)
-    if(interval!="none") p <- p + ggplot2::geom_ribbon(data=pr,ggplot2::aes_string(x=x,ymin=".lower",ymax=".upper"),inherit.aes=FALSE,alpha=.18)
+    p <- p + ggplot2::geom_line(data=pr,ggplot2::aes(x=.data[[x]],y=.data[[".fitted"]]),inherit.aes=FALSE,linewidth=.8)
+    if(interval!="none") p <- p + ggplot2::geom_ribbon(data=pr,ggplot2::aes(x=.data[[x]],ymin=.data[[".lower"]],ymax=.data[[".upper"]]),inherit.aes=FALSE,alpha=.18)
   } else {
-    p <- p + ggplot2::geom_line(data=pr,ggplot2::aes_string(x=x,y=".fitted",group=group,linetype=group),inherit.aes=FALSE,linewidth=.8)
-    if(interval!="none") p <- p + ggplot2::geom_ribbon(data=pr,ggplot2::aes_string(x=x,ymin=".lower",ymax=".upper",group=group),inherit.aes=FALSE,alpha=.14)
+    p <- p + ggplot2::geom_line(data=pr,ggplot2::aes(x=.data[[x]],y=.data[[".fitted"]],group=.data[[group]],linetype=.data[[group]]),inherit.aes=FALSE,linewidth=.8)
+    if(interval!="none") p <- p + ggplot2::geom_ribbon(data=pr,ggplot2::aes(x=.data[[x]],ymin=.data[[".lower"]],ymax=.data[[".upper"]],group=.data[[group]]),inherit.aes=FALSE,alpha=.14)
   }
   p
 }

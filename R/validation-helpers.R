@@ -83,3 +83,16 @@
   }
   group
 }
+
+#' Normalize lower/upper bounds to match parameter names
+#' @param lower Lower bounds (scalar or named vector)
+#' @param upper Upper bounds (scalar or named vector)
+#' @param pnames Character vector of parameter names
+#' @return List with named lower and upper vectors
+#' @keywords internal
+.nl_prepare_bounds <- function(lower, upper, pnames) {
+  if (length(lower) == 1L) lower <- rep(lower, length(pnames))
+  if (length(upper) == 1L) upper <- rep(upper, length(pnames))
+  names(lower) <- names(upper) <- pnames
+  list(lower = lower, upper = upper)
+}

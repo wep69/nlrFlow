@@ -177,10 +177,9 @@ nl_fit <- function(formula = NULL, data, start = NULL, engine = c("nlsLM","nls",
   if (is.null(start) && !is.null(model)) start <- nl_start(data,response,predictor,model)
   if (is.null(start) && engine %in% c("nls","nlsLM","gnls","robust","quantile")) stop("Starting values are required for an arbitrary formula.",call.=FALSE)
   if (!is.null(start)) {
-    pnames <- names(start)
-    if (length(lower) == 1L) lower <- rep(lower, length(pnames))
-    if (length(upper) == 1L) upper <- rep(upper, length(pnames))
-    names(lower) <- names(upper) <- pnames
+    bounds <- .nl_prepare_bounds(lower, upper, names(start))
+    lower <- bounds$lower
+    upper <- bounds$upper
   }
   fit <- switch(engine,
     nls = {

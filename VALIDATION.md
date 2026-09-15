@@ -16,9 +16,9 @@ Source-level gates verify:
 7. teaching-data rows and SHA-256 hashes are inventoried;
 8. BibTeX/RIS/CSV reference ledgers are synchronized;
 9. Phase-E Julia setup/runner files are present and their public specifications can be inspected without execution;
-10. the Phase-E cross-file integrity gate checks 74 blocks, 83 exports, 41 vignettes, 14 datasets, 28 synchronized references and required Julia safeguards.
+10. the Phase-E cross-file integrity gate checks 74 blocks, 83 scientific exports (plus 6 infrastructure exports), 43 vignettes, 14 datasets, 28 synchronized references and required Julia safeguards.
 
-Current source gate target: **83/83 exported functions**. `tools/validate_phase_e_integrity.py` currently reports **PASS**.
+Current source gate target: **83/83 exported scientific functions**. `tools/validate_phase_e_integrity.py`, `tools/static_validate.py`, `tools/check_example_coverage.py` and `tools/check_generated_rd_examples.py` all report **PASS**. The infrastructure exports (`%>%`, `nl_wizard()`, `nl_cache_clear()`, `nl_cache_info()`, `nl_list_engines()`, `nl_register_engine()`) are listed in `tools/infrastructure_exports.py` and excluded from the scientific-function counts.
 
 ## New Phase-E static/integration checks
 
@@ -50,7 +50,7 @@ Neither R/Rscript nor Julia is installed in the construction environment. Theref
 - successful differentiation/adjoint gradients on the local toolchain;
 - successful SymbolicRegression.jl searches;
 - numerical optimal-control solutions;
-- rendering of all 41 vignettes;
+- rendering of all 43 vignettes;
 - CRAN-ready status.
 
 ## Release-blocking SciML validation
@@ -68,6 +68,6 @@ Before Phase E is described as numerically certified, a clean local machine must
 9. dynamic-design improvement after actually collecting/simulating the suggested point and refitting;
 10. control schedule feasibility and comparison with no-control/fixed-control baselines;
 11. publication figure/table generation for every Phase-E class;
-12. all 41 vignettes, all examples, testthat, `R CMD build` and `R CMD check --as-cran`.
+12. all 43 vignettes, all examples, testthat, `R CMD build` and `R CMD check --as-cran`.
 
 See `LOCAL_VALIDATION.md` and `SCIML_BACKEND.md`.

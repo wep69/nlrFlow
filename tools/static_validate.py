@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import re, sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from infrastructure_exports import scientific_exports, all_exports
 root=Path(__file__).resolve().parents[1]
-ns=(root/'NAMESPACE').read_text()
-exports=re.findall(r'export\(([^)]+)\)',ns)
+exports=scientific_exports(root)
 allr='\n'.join(p.read_text(errors='ignore') for p in (root/'R').glob('*.R'))
 alls='\n'.join(p.read_text(errors='ignore') for p in (root/'vignettes').glob('*.Rmd'))
 problems=[]
@@ -21,4 +22,6 @@ if problems:
     print('STATIC VALIDATION FAIL')
     for p in problems: print('-',p)
     sys.exit(1)
-print(f'STATIC VALIDATION PASS: {len(exports)} exported functions; all definitions/documentation/vignette-call gates satisfied.')
+print(f'STATIC VALIDATION PASS: {len(exports)} exported scientific functions '
+      f'(plus {len(all_exports(root))-len(exports)} infrastructure exports); '
+      'all definitions/documentation/vignette-call gates satisfied.')

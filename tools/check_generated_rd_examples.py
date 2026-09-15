@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import re,csv,sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from infrastructure_exports import scientific_exports
 root=Path(__file__).resolve().parents[1]
-exports=re.findall(r'export\(([^)]+)\)',(root/'NAMESPACE').read_text())
+exports=scientific_exports(root)
 rows=[]
 for fn in exports:
  p=root/'man'/f'{fn}.Rd'

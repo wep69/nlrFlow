@@ -19,3 +19,5 @@ src/*.so
 src/*.dll
 /doc/
 /Meta/
+__pycache__/
+*.pyc

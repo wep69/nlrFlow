@@ -270,7 +270,7 @@ For `nl_control()` compare at least:
 
 Perturb weather/covariate trajectories and fitted parameters to test sensitivity. Confirm all lower/upper control bounds. A model-conditional schedule must not be described as a field recommendation unless economic, operational, crop-safety and other relevant constraints have been represented and independently validated.
 
-## 27. Examples and all 41 vignettes
+## 27. Examples and all 43 vignettes
 
 ```powershell
 Rscript -e ".libPaths('$Lib'); devtools::run_examples('$Pkg')"
@@ -324,4 +324,4 @@ Prefer `Status: OK`. Any package-code ERROR is release-blocking. Warnings/notes 
 
 ## 31. Release decision
 
-Do not label version 0.3.0.9000 CRAN-ready or Phase-E numerically certified until core tests, claimed optional backends, all 41 vignettes, frozen simulations, SciML recovery/ablation tests, output validation and `R CMD check --as-cran` pass in a clean environment. Preserve complete logs, `sessionInfo()`, Julia `Project.toml`/`Manifest.toml`, Julia version and all random seeds.
+Do not label version 0.3.0.9000 CRAN-ready or Phase-E numerically certified until core tests, claimed optional backends, all 43 vignettes, frozen simulations, SciML recovery/ablation tests, output validation and `R CMD check --as-cran` pass in a clean environment. Preserve complete logs, `sessionInfo()`, Julia `Project.toml`/`Manifest.toml`, Julia version and all random seeds.

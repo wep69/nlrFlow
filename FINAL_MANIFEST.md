@@ -30,9 +30,9 @@ Support functions `nl_sciml_available()`, `nl_sciml_info()` and `nl_sciml_setup(
 ## Package inventory
 
 - **74 scientific blocks**.
-- **83 exported/public functions**.
+- **83 exported scientific functions**, plus 6 infrastructure exports (`%>%`, `nl_wizard()`, `nl_cache_clear()`, `nl_cache_info()`, `nl_list_engines()`, `nl_register_engine()`), 89 in total.
 - **24 registered classical nonlinear model families**, plus dynamic/SciML adapters.
-- **41 English vignettes**, including 11 Phase-E end-to-end practical documents.
+- **43 vignettes**: 41 numbered scientific documents, including 11 Phase-E end-to-end practical documents, plus the English and Portuguese getting-started tutorials. Vignette file names carry a leading `v` (`v01-…`) because `R CMD check` flags `inst/doc` entries whose names start with a digit.
 - **14 frozen teaching datasets**, six of them new Phase-E simulations.
 - **28 synchronized bibliographic records** in package BibTeX, vignette BibTeX, RIS and metadata CSV.
 - Dedicated Julia setup and execution runner under `inst/julia/`.
@@ -75,15 +75,20 @@ These functions support the existing package export workflow for vector or high-
 
 ## Static source gates
 
-The final source tree passes the available construction-environment gates:
+The final source tree passes the available gates. Re-run them after any source
+change; the counts below are the outputs of the current tree (89 exports = 83
+scientific functions + 6 infrastructure exports, 43 vignettes):
 
 ```text
-ROXYGEN PARAM CHECK PASS: 83/83 exported functions have documented formals.
+ROXYGEN PARAM CHECK PASS: 89/89 exported functions have documented formals.
 Example coverage: 83 / 83 PASS
-STATIC VALIDATION PASS: 83 exported functions; all definitions/documentation/vignette-call gates satisfied.
+STATIC VALIDATION PASS: 83 exported scientific functions (plus 6 infrastructure exports); all definitions/documentation/vignette-call gates satisfied.
 Materialized 83 conservative Rd topics. Regenerate with roxygen2 before release.
 Generated Rd example coverage: 83/83 PASS
-PHASE-E INTEGRITY: PASS | blocks=74 exports=83 vignettes=41 datasets=14 references=28
+PHASE-E INTEGRITY: PASS | blocks=74 exports=83 vignettes=43 datasets=14 references=28
+R CMD check --no-build-vignettes --no-manual: 0 errors, 0 warnings, 0 notes
+R CMD check (source tarball, vignettes built): 0 errors, 0 warnings, 0 notes
+testthat: FAIL 0 | WARN 0 | SKIP 2 | PASS 160
 R delimiter check: PASS
 Julia delimiter check: PASS
 ```
@@ -107,7 +112,7 @@ Important evidence boundaries are retained explicitly. In particular, the soil-o
 - independent Richards-solver comparison;
 - SymbolicRegression.jl execution;
 - optimal-control numerical execution;
-- rendering of all 41 vignettes.
+- rendering of all 43 vignettes.
 
 These are release-blocking local acceptance tests and are specified in `LOCAL_VALIDATION.md` and `SCIML_BACKEND.md`.
 

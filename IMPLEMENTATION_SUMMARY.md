@@ -5,9 +5,9 @@ Implementation date: **2026-08-17**.
 ## Integrated scope
 
 - **74 scientific blocks**: original 1–44, Phase D1 45–63, Phase D2 64–67 and Phase E 68–74.
-- **83 exported/public functions**.
+- **83 exported scientific functions**, plus 6 infrastructure exports (`%>%`, `nl_wizard()`, `nl_cache_clear()`, `nl_cache_info()`, `nl_list_engines()`, `nl_register_engine()`), 89 in total.
 - **24 registered nonlinear model families** plus dynamic/custom-likelihood/SciML adapters.
-- **41 English vignettes**, including 11 Phase-E practical-cycle documents.
+- **43 vignettes**: 41 numbered scientific documents, including 11 Phase-E practical-cycle documents, plus the English and Portuguese getting-started tutorials.
 - **14 frozen teaching datasets**: eight prior datasets plus six Phase-E simulations.
 - **28 synchronized bibliographic records** after the Phase-E literature update.
 

@@ -26,7 +26,9 @@
 * Imported `runif`, `setNames`, `weighted.mean` from `stats` and `capture.output`, `combn`, `head`, `tail` from `utils`, and declared `.data` as a known global, removing all "no visible global function definition" notes.
 * Replaced the non-ASCII box-drawing banner in `nl_wizard()` with ASCII.
 * Added `.github` and `CITATION.cff` to `.Rbuildignore`, removing the two remaining build notes.
-* Result: `R CMD check` reports **0 errors, 0 warnings, 0 notes** (with `--no-build-vignettes --no-manual`).
+* Renamed the vignette sources from `01-foundations.Rmd` to `v01-foundations.Rmd`: `R CMD check` flags `inst/doc` entries whose names start with a digit ("Subdirectory 'inst/doc' contains invalid file names"). `tools/validate_phase_e_integrity.py` follows the new naming. `inst/metadata/vignette_manifest.csv` was updated and now also lists the two getting-started tutorials.
+* Reconciled the export bookkeeping: `NAMESPACE` exports 83 scientific functions plus 6 infrastructure entry points (`%>%`, `nl_wizard()`, `nl_cache_clear()`, `nl_cache_info()`, `nl_list_engines()`, `nl_register_engine()`), 89 in total. The list lives in `tools/infrastructure_exports.py` and the static gates, `README.md`, `VALIDATION.md`, `FINAL_MANIFEST.md` and `IMPLEMENTATION_SUMMARY.md` now report both numbers instead of a stale "83 exported functions".
+* Result: `R CMD check` reports **0 errors, 0 warnings, 0 notes**, both on the source directory (`--no-build-vignettes --no-manual`) and on the built source tarball with vignettes; all five static gates pass and `testthat` reports 160 passing assertions.
 
 ## 0.3.0.9000 features
 

@@ -2,6 +2,8 @@
 """Static cross-file integrity checks for nlrFlow Phase E (blocks 68-74)."""
 from pathlib import Path
 import csv, re, sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from infrastructure_exports import scientific_exports, all_exports
 ROOT = Path(__file__).resolve().parents[1]
 errors=[]
 
@@ -23,18 +25,20 @@ for r in b:
 if nums and nums != list(range(1,75)): fail('Block numbers are not exactly 1:74')
 
 # Public API and Phase-E function names.
-ns=(ROOT/'NAMESPACE').read_text(encoding='utf-8')
-exports=re.findall(r'^export\(([^)]+)\)',ns,re.M)
-if len(exports)!=83: fail(f'Expected 83 exports, found {len(exports)}')
+exports=scientific_exports(ROOT)
+if len(exports)!=83: fail(f'Expected 83 scientific exports, found {len(exports)}')
+infra=len(all_exports(ROOT))-len(exports)
+if infra!=6: fail(f'Expected 6 infrastructure exports, found {infra}')
 phase_e={'nl_sciml_available','nl_sciml_info','nl_sciml_setup','nl_neural_ode','nl_ude','nl_pinn','nl_missing_physics','nl_ude_discover','nl_sciml_diagnose','nl_dynamic_design','nl_control'}
 missing=phase_e-set(exports)
 if missing: fail('Missing Phase-E exports: '+', '.join(sorted(missing)))
 
-# Documentation counts.
+# Documentation counts. Vignette file names carry a leading `v` because R CMD
+# check flags inst/doc entries whose names start with a digit.
 vigs=list((ROOT/'vignettes').glob('*.Rmd'))
-if len(vigs)!=41: fail(f'Expected 41 Rmd vignettes, found {len(vigs)}')
-for i in range(31,42):
-    if not any(p.name.startswith(f'{i:02d}-') for p in vigs): fail(f'Missing vignette {i:02d}')
+if len(vigs)<41: fail(f'Expected at least 41 Rmd vignettes, found {len(vigs)}')
+for i in range(1,42):
+    if not any(p.name.startswith(f'v{i:02d}-') for p in vigs): fail(f'Missing vignette v{i:02d}')
 
 # Teaching datasets and provenance.
 ext=list((ROOT/'inst/extdata').glob('*.csv'))

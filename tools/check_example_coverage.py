@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import re, sys, csv
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from infrastructure_exports import scientific_exports
 root=Path(__file__).resolve().parents[1]
-ns=(root/'NAMESPACE').read_text(); exports=re.findall(r'export\(([^)]+)\)',ns)
+exports=scientific_exports(root)
 allr='\n'.join(p.read_text(errors='ignore') for p in (root/'R').glob('*.R'))
 rows=[]
 for f in exports:

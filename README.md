@@ -7,9 +7,9 @@ The scientific objective is not to hide methodology behind a single black-box es
 ## Current scope
 
 - **74 scientific blocks** documented in `inst/metadata/74_BLOCKS_IMPLEMENTATION.csv`.
-- **83 exported functions** with at least three examples in the package documentation/vignette collection.
+- **83 exported scientific functions** with at least three examples in the package documentation/vignette collection, plus 6 infrastructure exports (`%>%`, `nl_wizard()`, `nl_cache_clear()`, `nl_cache_info()`, `nl_list_engines()`, `nl_register_engine()`), 89 in total.
 - **24 registered nonlinear model families**, including growth, dose-response, plateau, sorption, soil-water retention and physiological response functions.
-- **41 English vignettes** from foundations through the complete UDE → symbolic candidate → next-experiment cycle.
+- **43 vignettes**: 41 numbered scientific documents from foundations through the complete UDE → symbolic candidate → next-experiment cycle, plus the English and Portuguese getting-started tutorials.
 - **Fourteen frozen teaching datasets**, including six explicitly simulated Phase-E dynamic datasets for crop/fruit growth, soil water, fertility, physiology and irrigation.
 - Publication-oriented plotting, tables, reports and audit trails.
 
@@ -204,4 +204,4 @@ Heavy or specialized engines remain in `Suggests`. Important additions are `RTMB
 
 ## Validation status
 
-Static source gates pass for all 83 exported functions in this construction environment. R/Rscript is not installed here, so numerical execution, optional-backend golden tests, vignette rendering and `R CMD check --as-cran` are explicitly deferred to local validation. See `VALIDATION.md` and `LOCAL_VALIDATION.md`.
+The static source gates pass for all 83 exported scientific functions plus the 6 infrastructure exports. The package has also been validated locally with R 4.6.0: `testthat` reports `FAIL 0 | WARN 0 | SKIP 2 | PASS 160`, and `R CMD check` (both on the source directory with `--no-build-vignettes --no-manual` and on the built source tarball with vignettes) reports **0 errors, 0 warnings, 0 notes**. Optional-backend golden tests and Julia/PySR execution remain local acceptance tests; see `VALIDATION.md` and `LOCAL_VALIDATION.md`.

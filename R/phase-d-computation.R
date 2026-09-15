@@ -231,6 +231,8 @@ nl_abc <- function(observed, simulator, prior_sampler, summary_fun,
   if (!is.function(simulator) || !is.function(prior_sampler) || !is.function(summary_fun)) stop("simulator, prior_sampler and summary_fun must be functions.", call. = FALSE)
   if (n_sim < 100L) stop("n_sim should be at least 100 for a meaningful ABC screen.", call. = FALSE)
   if (!is.finite(tolerance) || tolerance <= 0 || tolerance >= 1) stop("tolerance must lie in (0,1).", call. = FALSE)
+  # The prior draws and simulations must not leak into the caller's random stream.
+  .nl_rng_saved <- .nl_rng_state(); on.exit(.nl_rng_restore(.nl_rng_saved), add = TRUE)
   set.seed(seed)
   pars <- as.matrix(prior_sampler(n_sim))
   if (nrow(pars) != n_sim) stop("prior_sampler(n_sim) must return n_sim rows.", call. = FALSE)

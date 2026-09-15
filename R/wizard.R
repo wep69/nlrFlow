@@ -30,9 +30,9 @@
 #'   \code{\link{nl_diagnose}}, \code{\link{nl_plot}}
 #' @export
 nl_wizard <- function(data = NULL, response = NULL, predictor = NULL) {
-  cat("╔══════════════════════════════════════╗\n")
-  cat("║       nlrFlow Analysis Wizard        ║\n")
-  cat("╚══════════════════════════════════════╝\n\n")
+  cat("+--------------------------------------+\n")
+  cat("|       nlrFlow Analysis Wizard        |\n")
+  cat("+--------------------------------------+\n\n")
 
   # Step 1: Data
   if (is.null(data)) {

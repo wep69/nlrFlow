@@ -11,7 +11,7 @@ nl_censored(
   status,
   lower = -Inf,
   upper = Inf,
-  sigma_start = 1,
+  sigma_start = NULL,
   control = list(maxit = 5000)
 )
 }

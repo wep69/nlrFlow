@@ -139,6 +139,8 @@ nl_global_start <- function(formula,data,lower,upper,pop_size=100,maxiter=1000,r
     if(inherits(pred,"try-error") || length(pred)!=length(y) || any(!is.finite(pred))) return(-.Machine$double.xmax)
     rss <- sum((y-pred)^2,na.rm=TRUE); if(!is.finite(rss)) return(-.Machine$double.xmax); -rss
   }
+  # The genetic search must not leak into the caller's random stream.
+  .nl_rng_saved <- .nl_rng_state(); on.exit(.nl_rng_restore(.nl_rng_saved), add = TRUE)
   set.seed(seed)
   ga <- GA::ga(type="real-valued",fitness=fitness,lower=as.numeric(lower),upper=as.numeric(upper),names=pnames,popSize=pop_size,maxiter=maxiter,run=run,optim=local_search,monitor=FALSE,...)
   sol <- ga@solution; if(is.matrix(sol)) sol <- sol[1,,drop=TRUE]; sol <- stats::setNames(as.numeric(sol),pnames)
@@ -199,10 +201,14 @@ nl_fit <- function(formula = NULL, data, start = NULL, engine = c("nlsLM","nls",
   }
   fit <- switch(engine,
     nls = {
+      # Pass lower/upper to stats::nls() only when they are finite. Passing the
+      # infinite defaults makes nls() warn "upper and lower bounds ignored unless
+      # algorithm = port" on every call, which pollutes all downstream output.
+      bounded <- any(is.finite(c(lower, upper)))
       args <- list(formula=formula, data=data, start=start,
-                   algorithm=if(any(is.finite(c(lower,upper)))) "port" else "default",
-                   lower=lower, upper=upper,
+                   algorithm=if(bounded) "port" else "default",
                    control=stats::nls.control(maxiter=500))
+      if (bounded) { args$lower <- lower; args$upper <- upper }
       if (!is.null(weights)) args$weights <- weights
       args <- c(args, list(...))
       do.call(stats::nls, args)

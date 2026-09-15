@@ -64,6 +64,11 @@ nl_symbolic <- function(data,response,predictors,niterations=200,
 
 .nl_prediction_grid <- function(object,predictor,grid_n=200,extrapolation=.1,template=NULL) {
   d<-object$data;if(!predictor%in%names(d))stop("predictor is absent from fitted data.",call.=FALSE);x<-as.numeric(d[[predictor]]);r<-range(x,na.rm=TRUE);span<-diff(r);lo<-r[1]-extrapolation*span;hi<-r[2]+extrapolation*span
+  # Do not extrapolate across zero when the observed predictor is one-sided: doses,
+  # times and concentrations are non-negative, and negative arguments make terms such
+  # as C^b or log(C) non-finite, which would wrongly invalidate a sound candidate.
+  if(is.finite(r[1])&&r[1]>=0&&lo<0)lo<-0
+  if(is.finite(r[2])&&r[2]<=0&&hi>0)hi<-0
   if(is.null(template)){template<-d[1,,drop=FALSE];for(nm in names(template))template[[nm]]<-.nl_mode_value(d[[nm]])}
   g<-template[rep(1,grid_n),,drop=FALSE];g[[predictor]]<-seq(lo,hi,length.out=grid_n);g
 }
@@ -141,7 +146,14 @@ nl_discover <- function(data,response,predictor,models=character(),candidate_for
     for(nm in names(candidate_formulas)){st<-candidate_starts[[nm]];if(is.null(st)){fail[[nm]]<-"No starting values supplied for candidate formula.";next};z<-try(nl_fit(candidate_formulas[[nm]],data=data,start=st,engine=engine),silent=TRUE);if(inherits(z,"try-error"))fail[[nm]]<-as.character(z) else fits[[nm]]<-z}
   }
   vals<-lapply(fits,function(z)tryCatch(nl_validate_candidate(z,predictor,constraints=constraints,k=k),error=function(e)e))
-  tab<-do.call(rbind,lapply(names(fits),function(nm){v<-vals[[nm]];if(inherits(v,"error"))return(data.frame(model=nm,valid=FALSE,RMSE=NA,MAE=NA,AICc=NA,CV_RMSE=NA,error=conditionMessage(v)));data.frame(model=nm,valid=v$pass,RMSE=v$metrics$RMSE,MAE=v$metrics$MAE,AICc=v$metrics$AICc,CV_RMSE=v$metrics$CV_RMSE,error="")}))
+  tab<-do.call(rbind,lapply(names(fits),function(nm){
+    v<-vals[[nm]]
+    if(inherits(v,"error"))return(data.frame(model=nm,valid=FALSE,RMSE=NA,MAE=NA,AICc=NA,CV_RMSE=NA,error=conditionMessage(v)))
+    bad<-v$checks[!v$checks$pass,,drop=FALSE]
+    # Report *why* a candidate was rejected instead of leaving the error column empty,
+    # so that a user formula failing the finite-prediction check is self-diagnosing.
+    err<-if(nrow(bad))paste0("failed checks: ",paste0(bad$check," (",bad$violations," violation(s))",collapse="; "))else""
+    data.frame(model=nm,valid=v$pass,RMSE=v$metrics$RMSE,MAE=v$metrics$MAE,AICc=v$metrics$AICc,CV_RMSE=v$metrics$CV_RMSE,error=err)}))
   structure(list(fits=fits,failures=fail,validation=vals,table=tab,constraints=constraints,response=response,predictor=predictor),class="nlr_discovery")
 }
 

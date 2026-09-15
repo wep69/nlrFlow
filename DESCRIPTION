@@ -35,7 +35,9 @@ Depends: R (>= 4.2.0)
 Imports:
     stats,
     utils,
-    graphics
+    graphics,
+    magrittr,
+    digest
 Suggests:
     minpack.lm,
     nls.multstart,

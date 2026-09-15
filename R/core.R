@@ -47,8 +47,26 @@
 #' nl_audit(phys, "A_umol_CO2_m2_s", "PAR_umol_m2_s", "water_regime")
 #' @export
 nl_audit <- function(data, response, predictor, group = NULL) {
-  stopifnot(is.data.frame(data), response %in% names(data), predictor %in% names(data))
+  if (!is.data.frame(data)) {
+    stop("`data` must be a data frame; got ", class(data)[1L], ".", call. = FALSE)
+  }
+  .nl_require_columns(data, c(response, predictor), "nl_audit()")
   y <- data[[response]]; x <- data[[predictor]]
+  if (!is.numeric(x)) {
+    stop("`predictor` must be numeric for nonlinear regression, but column '", predictor,
+         "' is ", class(x)[1L], " with levels/summary: ",
+         paste(utils::head(unique(as.character(x)), 5L), collapse = ", "),
+         ". Accepted numeric columns: ",
+         paste(names(data)[vapply(data, is.numeric, logical(1L))], collapse = ", "), ".",
+         call. = FALSE)
+  }
+  if (!is.numeric(y)) {
+    stop("`response` must be numeric for nonlinear regression, but column '", response,
+         "' is ", class(y)[1L], ". Accepted numeric columns: ",
+         paste(names(data)[vapply(data, is.numeric, logical(1L))], collapse = ", "), ".",
+         call. = FALSE)
+  }
+  if (!is.null(group)) .nl_require_columns(data, group, "nl_audit()")
   grp <- if (is.null(group)) NULL else interaction(data[group], drop = TRUE)
   tabx <- table(x)
   warnings <- character()

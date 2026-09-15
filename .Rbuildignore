@@ -19,3 +19,5 @@
 ^cheatsheet/
 ^doc$
 ^Meta$
+^\.github$
+^CITATION\.cff$

@@ -118,6 +118,9 @@ nl_derive <- function(object,predictor=NULL,grid=NULL,quantities=c("AGR","RGR","
   alpha <- 1-level
   if(is_bayes) {
     .nl_require("brms","Bayesian derived quantities")
+    # Posterior draws are seeded for reproducibility but must not leak into the
+    # caller's random stream.
+    .nl_rng_saved <- .nl_rng_state(); on.exit(.nl_rng_restore(.nl_rng_saved), add = TRUE)
     set.seed(20260817)
     draws <- brms::posterior_epred(object$fit,newdata=nd,ndraws=nsim,...)
     if(length(dim(draws))!=2L) stop("Only univariate posterior expected-response draws are supported by nl_derive().",call.=FALSE)

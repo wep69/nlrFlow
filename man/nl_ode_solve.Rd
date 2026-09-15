@@ -20,7 +20,12 @@ nl_ode_solve(state, times, func, parms, method = "lsoda", ...)
 \item{...}{Additional arguments to \code{deSolve::ode}.}
 }
 \value{
-A data frame-like ODE solution returned by \code{deSolve}.
+An \code{nlr_ode} object. Its \verb{$solution} element is the numeric matrix
+returned by \code{deSolve::ode} (first column \code{time}, one column per state),
+together with \verb{$times}, \verb{$states}, \verb{$parms}, \verb{$method}, \verb{$engine}, and
+\verb{$diagnostics}. \code{print()} shows the solution, \code{summary()} lists the model
+specification, and \code{[} and \code{as.data.frame()} are forwarded to the solution
+matrix, so \code{sol[, "B"]} and \code{as.data.frame(sol)} keep working.
 }
 \description{
 Routes initial-value ODE systems to \code{deSolve::ode}, enabling agronomic,

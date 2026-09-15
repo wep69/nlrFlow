@@ -7,6 +7,8 @@
 #' @param level Interval level.
 #' @param x X variable name.
 #' @param y Y variable name.
+#' @param xlab Optional axis label for the x axis. `x` and `y` select *variables* from the fitted data, not axis labels; use `xlab`/`ylab` to relabel the axes without changing the plotted columns.
+#' @param ylab Optional axis label for the y axis.
 #' @param group Optional grouping aesthetic for observed points.
 #' @param boot Optional bootstrap object.
 #' @param raw_data Optional data frame used only for plotting observed points, for example individual observations when the fitted object used time-specific means.
@@ -17,21 +19,27 @@
 #' @examples
 #' \dontrun{
 #' f <- nl_fit(data=nl_data("okra_growth_means"),model="gompertz",response="fruit_length",predictor="day_after_flowering",engine="nls"); nl_plot(f,raw_data=nl_data("okra_growth_raw"))
+#' nl_plot(f,xlab="Dias",ylab="Comprimento do fruto (cm)")
 #' f <- nl_fit(data=subset(nl_data("soil_fertility_p"),soil_class=="Loamy"),model="mitscherlich",response="grain_yield_Mg_ha",predictor="P2O5_kg_ha",engine="nls"); nl_plot(f)
 #' f <- nl_fit(data=subset(nl_data("soil_infiltration"),management=="NoTill"),model="michaelis_menten",response="cumulative_infiltration_mm",predictor="time_min",engine="nls"); nl_plot(f)
 #' }
 #' @export
-nl_plot <- function(object,newdata=NULL,interval="confidence",level=.95,x=NULL,y=NULL,group=NULL,boot=NULL,raw_data=NULL,point_alpha=.65,point_size=1.8,...) {
+nl_plot <- function(object,newdata=NULL,interval="confidence",level=.95,x=NULL,y=NULL,xlab=NULL,ylab=NULL,group=NULL,boot=NULL,raw_data=NULL,point_alpha=.65,point_size=1.8,...) {
   .nl_require("ggplot2","publication-ready graphics")
   if(!inherits(object,"nlrfit")) {
-    p_phase <- .nl_phase_d_plot(object,x=x,y=y,...)
+    p_phase <- .nl_phase_d_plot(object,x=x,y=y,xlab=xlab,ylab=ylab,...)
     if(!is.null(p_phase)) return(p_phase)
     stop("Unsupported object class for nl_plot().",call.=FALSE)
   }
   if(identical(object$engine,"brms") && (is.null(x) || is.null(y))) stop("For Bayesian brms fits, specify x= and y= explicitly in nl_plot().",call.=FALSE)
   y <- y %||% .nl_response_name(object$formula)
   if(is.null(x)){v <- .nl_predictor_names(object$formula); v <- v[v %in% names(object$data)]; x <- v[vapply(object$data[v],is.numeric,logical(1))][1]}
-  if(is.null(x) || is.na(x) || !x %in% names(object$data)) stop("Specify a valid numeric x variable.",call.=FALSE)
+  if(is.null(x) || is.na(x) || !x %in% names(object$data)) {
+    num <- names(object$data)[vapply(object$data,is.numeric,logical(1))]
+    stop("`x` must name a numeric variable in the fitted data (it selects a variable, not an axis label; use `xlab=` to relabel the axis). ",
+         if(length(num)) paste0("Numeric variables available: ",paste(num,collapse=", "),".") else "No numeric variables available.",
+         call.=FALSE)
+  }
   if(!is.null(group) && !group %in% names(object$data)) stop("group is not present in the fitted data.",call.=FALSE)
   if(is.null(newdata)) {
     grid <- seq(min(object$data[[x]],na.rm=TRUE),max(object$data[[x]],na.rm=TRUE),length.out=200)
@@ -49,7 +57,7 @@ nl_plot <- function(object,newdata=NULL,interval="confidence",level=.95,x=NULL,y
   if(!all(c(x,y) %in% names(points))) stop("raw_data must contain the plotted x and y columns.",call.=FALSE)
   if(!is.null(group) && !group %in% names(points)) stop("group is not present in plotting data.",call.=FALSE)
   aes_points <- if(is.null(group)) ggplot2::aes(x=.data[[x]],y=.data[[y]]) else ggplot2::aes(x=.data[[x]],y=.data[[y]],shape=.data[[group]])
-  p <- ggplot2::ggplot(points,aes_points) + ggplot2::geom_point(alpha=point_alpha,size=point_size) + ggplot2::labs(x=x,y=y) + ggplot2::theme_classic(base_size=11)
+  p <- ggplot2::ggplot(points,aes_points) + ggplot2::geom_point(alpha=point_alpha,size=point_size) + ggplot2::labs(x=xlab %||% x,y=ylab %||% y) + ggplot2::theme_classic(base_size=11)
   if(is.null(group)) {
     p <- p + ggplot2::geom_line(data=pr,ggplot2::aes(x=.data[[x]],y=.data[[".fitted"]]),inherit.aes=FALSE,linewidth=.8)
     if(interval!="none") p <- p + ggplot2::geom_ribbon(data=pr,ggplot2::aes(x=.data[[x]],ymin=.data[[".lower"]],ymax=.data[[".upper"]]),inherit.aes=FALSE,alpha=.18)
@@ -106,7 +114,15 @@ nl_table <- function(object,type=c("parameters","fit","diagnostics","derived"),r
   valid <- list(html=c("html","htm"),pdf="pdf",png="png",latex=c("tex","ltx","rnw"),rtf="rtf",docx="docx")[[render]]
   base <- basename(file); has_ext <- grepl("\\.[^.]+$",base); ext <- if(has_ext) tolower(sub("^.*\\.","",base)) else ""
   if(!ext %in% valid) file <- if(has_ext) sub("\\.[^.]+$",paste0(".",expected),file) else paste0(file,".",expected)
-  gt::gtsave(gt::gt(tab),filename=file,...)
+  if(render=="latex") {
+    # Not every gt release gives gtsave() a LaTeX branch: write the LaTeX source
+    # ourselves so that render = "latex" always produces the requested file.
+    tex <- tryCatch(gt::as_latex(gt::gt(tab)),error=function(e)NULL)
+    if(is.null(tex)) gt::gtsave(gt::gt(tab),filename=file,...) else writeLines(as.character(tex),file)
+  } else {
+    gt::gtsave(gt::gt(tab),filename=file,...)
+  }
+  if(!file.exists(file)) stop("Table rendering with render = '",render,"' did not create '",file,"'.",call.=FALSE)
   invisible(normalizePath(file,mustWork=FALSE))
 }
 #' Save publication graphics

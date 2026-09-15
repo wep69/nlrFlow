@@ -11,6 +11,8 @@ nl_plot(
   level = 0.95,
   x = NULL,
   y = NULL,
+  xlab = NULL,
+  ylab = NULL,
   group = NULL,
   boot = NULL,
   raw_data = NULL,
@@ -31,6 +33,10 @@ nl_plot(
 \item{x}{X variable name.}
 
 \item{y}{Y variable name.}
+
+\item{xlab}{Optional axis label for the x axis. \code{x} and \code{y} select \emph{variables} from the fitted data, not axis labels; use \code{xlab}/\code{ylab} to relabel the axes without changing the plotted columns.}
+
+\item{ylab}{Optional axis label for the y axis.}
 
 \item{group}{Optional grouping aesthetic for observed points.}
 
@@ -53,6 +59,7 @@ Creates a ggplot with observed data, fitted curve, and optional uncertainty ribb
 \examples{
 \dontrun{
 f <- nl_fit(data=nl_data("okra_growth_means"),model="gompertz",response="fruit_length",predictor="day_after_flowering",engine="nls"); nl_plot(f,raw_data=nl_data("okra_growth_raw"))
+nl_plot(f,xlab="Dias",ylab="Comprimento do fruto (cm)")
 f <- nl_fit(data=subset(nl_data("soil_fertility_p"),soil_class=="Loamy"),model="mitscherlich",response="grain_yield_Mg_ha",predictor="P2O5_kg_ha",engine="nls"); nl_plot(f)
 f <- nl_fit(data=subset(nl_data("soil_infiltration"),management=="NoTill"),model="michaelis_menten",response="cumulative_infiltration_mm",predictor="time_min",engine="nls"); nl_plot(f)
 }

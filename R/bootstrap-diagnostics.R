@@ -22,7 +22,20 @@ nl_boot <- function(object,R=999,type=c("case","residual","parametric","cluster"
       residual={z<-dat;z[[resp]]<-fitv+sample(res,n,replace=TRUE);z},
       parametric={z<-dat;z[[resp]]<-fitv+stats::rnorm(n,0,sig);z},
       wild={z<-dat; mult<-sample(c(-1,1),n,replace=TRUE); z[[resp]]<-fitv+res*mult; z},
-      cluster={if(is.null(cluster)||!cluster%in%names(dat)) stop("cluster column required",call.=FALSE); ids<-unique(dat[[cluster]]); draw<-sample(ids,length(ids),replace=TRUE); do.call(rbind,lapply(seq_along(draw),function(j){z<-dat[dat[[cluster]]==draw[j],,drop=FALSE];z[[cluster]]<-paste0(draw[j],"_boot",j);z}))})
+      cluster={
+        # Accept either the column name or the cluster vector itself. Passing a
+        # vector used to fail with a coercion error inside the comparison.
+        if(is.null(cluster)) stop("cluster column or vector required for type='cluster'.",call.=FALSE)
+        if(is.character(cluster)&&length(cluster)==1L){
+          if(!cluster%in%names(dat)) stop("cluster column '",cluster,"' is not present in the fitted data.",call.=FALSE)
+          cl_vec<-dat[[cluster]]; cl_name<-cluster
+        } else {
+          if(length(cluster)!=n) stop("cluster vector must have one element per observation (",n,").",call.=FALSE)
+          cl_vec<-cluster; cl_name<-".nl_cluster"; dat[[cl_name]]<-cl_vec
+        }
+        ids<-unique(cl_vec); draw<-sample(ids,length(ids),replace=TRUE)
+        do.call(rbind,lapply(seq_along(draw),function(j){z<-dat[cl_vec==draw[j],,drop=FALSE];z[[cl_name]]<-paste0(draw[j],"_boot",j);z}))
+      })
     z<-try(.nl_refit(object,d),silent=TRUE); if(!inherits(z,"try-error")){cc<-try(coef(z),silent=TRUE);if(!inherits(cc,"try-error")){out[b,names(cc)]<-cc;ok[b]<-TRUE}}
   }
   structure(list(coefficients=out,converged=ok,R=R,type=type,seed=seed,object=object,failure_rate=mean(!ok)),class="nlrboot")

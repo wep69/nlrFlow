@@ -43,6 +43,38 @@
   invisible(TRUE)
 }
 
+#' Require that columns exist, with an actionable message
+#'
+#' Replaces bare `stopifnot(... %in% names(data))` calls, whose failure message is
+#' the raw expression, by a message naming the missing columns and the accepted ones.
+#' @param data A data frame.
+#' @param cols Character vector of required column names.
+#' @param label Function name used to prefix the error message.
+#' @param numeric_cols Optional character vector of columns that must additionally be numeric.
+#' @return TRUE invisibly
+#' @keywords internal
+.nl_require_columns <- function(data, cols, label = "this function", numeric_cols = NULL) {
+  cols <- cols[!vapply(cols, function(z) is.null(z) || length(z) != 1L || is.na(z) || !nzchar(z), logical(1L))]
+  missing <- setdiff(cols, names(data))
+  if (length(missing)) {
+    stop(label, ": column(s) not found in `data`: ",
+         paste0("'", missing, "'", collapse = ", "),
+         ". Available columns: ", paste0("'", names(data), "'", collapse = ", "), ".",
+         call. = FALSE)
+  }
+  if (!is.null(numeric_cols) && length(numeric_cols)) {
+    bad <- numeric_cols[!vapply(data[numeric_cols], is.numeric, logical(1L))]
+    if (length(bad)) {
+      stop(label, ": column(s) must be numeric: ",
+           paste0("'", bad, "'", collapse = ", "),
+           ". Numeric columns available: ",
+           paste0("'", names(data)[vapply(data, is.numeric, logical(1L))], "'", collapse = ", "), ".",
+           call. = FALSE)
+    }
+  }
+  invisible(TRUE)
+}
+
 #' Resolve and validate predictor column
 #' @param object An nlrfit
 #' @param predictor Predictor name or NULL to auto-detect

@@ -135,6 +135,8 @@ nl_conformal <- function(object, newdata = NULL, alpha = 0.05,
   if (n < 8L) stop("At least eight observations are recommended for split conformal prediction.",call.=FALSE)
   if (is.null(indices)) {
     if (!is.finite(calibration_fraction) || calibration_fraction <= 0 || calibration_fraction >= .8) stop("calibration_fraction must lie in (0,.8).",call.=FALSE)
+    # The random calibration split must not leak into the caller's random stream.
+    .nl_rng_saved <- .nl_rng_state(); on.exit(.nl_rng_restore(.nl_rng_saved), add = TRUE)
     set.seed(seed); ncal <- max(2L, floor(n*calibration_fraction)); cal <- sort(sample.int(n,ncal))
   } else {
     cal <- sort(unique(as.integer(indices))); if(any(cal<1|cal>n)) stop("indices contain invalid rows.",call.=FALSE)
@@ -188,6 +190,8 @@ nl_conformal_group <- function(object, cluster, newdata = NULL, strata = NULL,
   if(!is.null(strata) && !strata %in% names(d)) stop("strata column is absent from fitted data.",call.=FALSE)
   ids <- unique(d[[cluster]]); G <- length(ids)
   if(G < 4L) stop("At least four independent clusters are required.",call.=FALSE)
+  # The random cluster split must not leak into the caller's random stream.
+  .nl_rng_saved <- .nl_rng_state(); on.exit(.nl_rng_restore(.nl_rng_saved), add = TRUE)
   set.seed(seed); ncal <- max(1L,floor(G*calibration_fraction)); cal_ids <- sample(ids,ncal)
   cal <- which(d[[cluster]] %in% cal_ids); train <- setdiff(seq_len(nrow(d)),cal)
   fit_train <- .nl_refit(object,d[train,,drop=FALSE]); resp <- .nl_response_name(object$formula)
@@ -339,15 +343,54 @@ nl_mean_variance <- function(mean_formula, variance_formula, data, start_mean,
 #' p <- subset(nl_data("plant_physiology_light"),water_regime=="WellWatered"); p$status<-"none"; nl_censored(A_umol_CO2_m2_s~Amax*alpha*PAR_umol_m2_s/(Amax+alpha*PAR_umol_m2_s)-Rd,p,c(Amax=30,alpha=.06,Rd=1),p$status,-Inf,Inf,1)
 #' }
 #' @export
-nl_censored <- function(formula,data,start,status,lower=-Inf,upper=Inf,sigma_start=1,
+nl_censored <- function(formula,data,start,status,lower=-Inf,upper=Inf,sigma_start=NULL,
                         control=list(maxit=5000)) {
   b0<-unlist(start);if(is.null(names(b0)))stop("start must be named.",call.=FALSE);n<-nrow(data);p<-length(b0);resp<-.nl_response_name(formula);y<-data[[resp]]
   st<-if(length(status)==1L&&is.character(status)&&status%in%names(data))as.character(data[[status]]) else as.character(status);if(length(st)==1L)st<-rep(st,n);if(length(st)!=n||any(!st%in%c("none","left","right","interval")))stop("status must contain none/left/right/interval.",call.=FALSE)
   bound<-function(z,default){if(length(z)==1L&&is.character(z)&&z%in%names(data))z<-data[[z]];if(length(z)==1L)z<-rep(as.numeric(z),n);if(length(z)!=n)stop("Censoring bounds must have length 1/n or name a column.",call.=FALSE);as.numeric(z)}
   lo<-bound(lower,-Inf);up<-bound(upper,Inf)
+  # Derive sigma_start from an unconstrained NLS fit when the user does not
+  # supply it, then run the optimiser from several sigma scales and keep the
+  # best objective. A single start is not enough: the censored Gaussian log
+  # likelihood has a flat region in sigma for these data, so the optimiser can
+  # stop on a plateau, report convergence = 0, and return an inadmissible
+  # parameter (for example a negative Langmuir affinity).
+  pre <- try(stats::nls(formula, data=data, start=b0), silent=TRUE)
+  sigma_pre <- if(inherits(pre,"try-error")) 1 else {
+    s <- stats::sd(stats::residuals(pre)); if(is.finite(s)&&s>0) s else 1
+  }
+  if(!is.null(sigma_start) &&
+     (!is.numeric(sigma_start)||length(sigma_start)!=1L||!is.finite(sigma_start)||sigma_start<=0))
+    stop("sigma_start must be a single positive finite number.",call.=FALSE)
   obj<-function(z){b<-z[seq_len(p)];names(b)<-names(b0);sd<-exp(z[p+1L]);mu<-.nl_rhs_eval(formula,data,b);ll<-numeric(n);i<-st=="none";ll[i]<-stats::dnorm(y[i],mu[i],sd,log=TRUE);i<-st=="left";ll[i]<-stats::pnorm(up[i],mu[i],sd,log.p=TRUE);i<-st=="right";ll[i]<-stats::pnorm(lo[i],mu[i],sd,lower.tail=FALSE,log.p=TRUE);i<-st=="interval";if(any(i)){a<-stats::pnorm(up[i],mu[i],sd,log.p=TRUE);bb<-stats::pnorm(lo[i],mu[i],sd,log.p=TRUE);ll[i]<-.nl_logdiffexp(a,bb)};if(any(!is.finite(ll)))return(.Machine$double.xmax/100);-sum(ll)}
-  opt<-stats::optim(c(b0,log(sigma_start)),obj,method="BFGS",control=control,hessian=TRUE);b<-opt$par[seq_len(p)];names(b)<-names(b0);sd<-exp(opt$par[p+1L]);mu<-.nl_rhs_eval(formula,data,b);V<-tryCatch(solve(opt$hessian),error=function(e)NULL)
-  structure(list(coefficients=b,sigma=sd,fitted=mu,status=st,lower=lo,upper=up,optimization=opt,vcov=V,formula=formula,data=data,call=match.call()),class="nlr_censored_fit")
+  # When the user supplies sigma_start, that value is tried first and the search
+  # around it stays local; otherwise the residual scale anchors a wider grid.
+  starts <- if(!is.null(sigma_start)) {
+    unique(c(sigma_start, sigma_start*c(0.25, 1, 4, 16)))
+  } else {
+    unique(c(sigma_pre, sigma_pre*c(0.25, 0.5, 1, 2, 4, 8, 16), 1))
+  }
+  fits <- lapply(starts, function(s0){
+    try(stats::optim(c(b0,log(s0)),obj,method="BFGS",control=control,hessian=TRUE),silent=TRUE)
+  })
+  vals <- vapply(fits,function(z) if(inherits(z,"try-error")) Inf else z$value, numeric(1))
+  if(all(!is.finite(vals))) stop("All censored-likelihood optimisation starts failed.",call.=FALSE)
+  opt<-fits[[which.min(vals)]]
+  b<-opt$par[seq_len(p)];names(b)<-names(b0);sd<-exp(opt$par[p+1L]);mu<-.nl_rhs_eval(formula,data,b);V<-tryCatch(solve(opt$hessian),error=function(e)NULL)
+  # Sanity check: with no censoring, the censored optimum must not be materially
+  # worse than the unconstrained NLS fit. If it still is after the multi-start,
+  # say so instead of returning a silent bad answer.
+  if(!inherits(pre,"try-error")){
+    nll_pre <- obj(c(stats::coef(pre), log(stats::sd(stats::residuals(pre)))))
+    if(is.finite(nll_pre) && is.finite(opt$value) && nll_pre < opt$value - 1e-6)
+      warning("Censored optimum is worse than an unconstrained NLS fit (",
+              format(opt$value, digits=6), " vs ", format(nll_pre, digits=6),
+              "); the censored likelihood surface is flat in sigma. Inspect the fit before use.",
+              call.=FALSE)
+  }
+  structure(list(coefficients=b,sigma=sd,fitted=mu,status=st,lower=lo,upper=up,
+                 optimization=opt,n_starts=length(starts),vcov=V,formula=formula,data=data,call=match.call()),
+            class="nlr_censored_fit")
 }
 
 #' Truncated nonlinear Gaussian regression
@@ -427,6 +470,8 @@ nl_structural_identify <- function(formula,data,parameters,rel_step=sqrt(.Machin
 #' @export
 nl_sensitivity <- function(model_fun,ranges,method=c("local","morris","sobol"),summary_fun=mean,n=500,delta=.05,seed=20260817) {
   method<-match.arg(method);R<-as.matrix(ranges);if(ncol(R)!=2L)stop("ranges must have exactly two columns: lower and upper.",call.=FALSE);if(is.null(rownames(R)))stop("ranges must have parameter names as row names.",call.=FALSE);if(any(R[,1]>=R[,2]))stop("Each lower bound must be smaller than its upper bound.",call.=FALSE);p<-nrow(R);names0<-rownames(R);eval1<-function(v)as.numeric(summary_fun(model_fun(stats::setNames(v,names0))))[1]
+  # Morris/Sobol draws must not leak into the caller's random stream.
+  .nl_rng_saved <- .nl_rng_state(); on.exit(.nl_rng_restore(.nl_rng_saved), add = TRUE)
   set.seed(seed)
   if(method=="local"){x<-rowMeans(R);base<-eval1(x);out<-data.frame(parameter=names0,sensitivity=NA_real_,elasticity=NA_real_);for(j in seq_len(p)){h<-delta*(R[j,2]-R[j,1]);xp<-xm<-x;xp[j]<-min(R[j,2],x[j]+h);xm[j]<-max(R[j,1],x[j]-h);s<-(eval1(xp)-eval1(xm))/(xp[j]-xm[j]);out$sensitivity[j]<-s;out$elasticity[j]<-if(is.finite(base)&&abs(base)>.Machine$double.eps)s*x[j]/base else NA_real_};res<-out}
   if(method=="morris"){EE<-matrix(NA_real_,n,p,dimnames=list(NULL,names0));for(i in seq_len(n)){x<-runif(p,R[,1],R[,2]);for(j in seq_len(p)){h<-delta*(R[j,2]-R[j,1]);xp<-x;xp[j]<-min(R[j,2],x[j]+h);if(xp[j]==x[j])xp[j]<-max(R[j,1],x[j]-h);EE[i,j]<-(eval1(xp)-eval1(x))/(xp[j]-x[j])}};res<-data.frame(parameter=names0,mu=colMeans(EE,na.rm=TRUE),mu_star=colMeans(abs(EE),na.rm=TRUE),sigma=apply(EE,2,stats::sd,na.rm=TRUE));attr(res,"elementary_effects")<-EE}

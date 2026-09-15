@@ -13,9 +13,10 @@ nl_robust(formula, data, start, method = "M", lower = -Inf, upper = Inf, ...)
 
 \item{start}{Named starting values.}
 
-\item{method}{Robust method supported by \code{nlrob}.}
+\item{method}{Robust method supported by \code{nlrob}: \code{"M"}, \code{"MM"}, \code{"tau"}, \code{"CM"}, or \code{"mtl"}.}
 
-\item{lower}{Lower bounds.}
+\item{lower}{Lower bounds. Bounds are named from \code{names(start)}; scalar bounds are
+replicated to every parameter. The infinite defaults mean "unbounded".}
 
 \item{upper}{Upper bounds.}
 
@@ -27,10 +28,21 @@ An \code{nlrfit} with engine \code{robust}.
 \description{
 Fits resistant nonlinear regression through \code{robustbase::nlrob}, retaining the nlrFlow metadata contract.
 }
+\details{
+\code{robustbase::nlrob()} requires fully named bounds whenever bounds are
+supplied, and its global-search methods (\code{"MM"}, \code{"tau"}, \code{"CM"}, \code{"mtl"})
+require \emph{finite} bounds. Method \code{"M"} passes bounds to \code{stats::nls()}, which
+only honours them under \code{algorithm = "port"}, so that algorithm is selected
+automatically when finite bounds are given; unbounded \code{"M"} fits are run
+without bounds at all, which avoids the repeated "bounds ignored" warnings.
+}
 \examples{
 \dontrun{
 okra <- nl_data("okra_growth_means"); nl_robust(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))),okra,list(Asym=18,k=.4,xmid=4))
 fert <- subset(nl_data("soil_fertility_p"),soil_class=="Loamy"); nl_robust(grain_yield_Mg_ha~Asym-delta*exp(-k*P2O5_kg_ha),fert,list(Asym=8,delta=5,k=.02))
 soil <- subset(nl_data("soil_infiltration"),management=="NoTill"); nl_robust(cumulative_infiltration_mm~Vmax*time_min/(Km+time_min),soil,list(Vmax=130,Km=30))
+# Global-search methods need finite bounds:
+nl_robust(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))),okra,list(Asym=18,k=.4,xmid=4),
+          method="MM",lower=c(Asym=0,k=0,xmid=0),upper=c(Asym=40,k=2,xmid=15))
 }
 }

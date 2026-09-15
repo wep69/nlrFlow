@@ -80,10 +80,13 @@ nl_lrt <- function(reduced, full, nested=FALSE) {
 #' @export
 nl_cv <- function(object,k=5,seed=20260817) {
   stopifnot(inherits(object,"nlrfit")); if(identical(object$engine,"brms")) stop("Use PSIS-LOO via nl_bayes_compare() for brms-backed models.",call.=FALSE); n<-nrow(object$data); if(k<2||k>n) stop("Invalid k",call.=FALSE)
-  set.seed(seed); fold<-sample(rep(seq_len(k),length.out=n)); resp<-.nl_response_name(object$formula); res<-vector("list",k)
+  # `seed` must not leak into the caller's random stream: .nl_with_seed restores it.
+  .nl_with_seed(seed, {
+  fold<-sample(rep(seq_len(k),length.out=n)); resp<-.nl_response_name(object$formula); res<-vector("list",k)
   for(i in seq_len(k)){tr<-object$data[fold!=i,,drop=FALSE];te<-object$data[fold==i,,drop=FALSE]; z<-try(.nl_refit(object,tr),silent=TRUE)
     if(inherits(z,"try-error")){res[[i]]<-data.frame(fold=i,n=nrow(te),RMSE=NA,MAE=NA);next}; pr<-as.numeric(predict(z,newdata=te)); ob<-te[[resp]];res[[i]]<-data.frame(fold=i,n=nrow(te),RMSE=.nl_rmse(ob,pr),MAE=.nl_mae(ob,pr))}
   tab<-do.call(rbind,res); list(folds=tab,RMSE=weighted.mean(tab$RMSE,tab$n,na.rm=TRUE),MAE=weighted.mean(tab$MAE,tab$n,na.rm=TRUE),seed=seed)
+  })
 }
 #' Confidence intervals for nonlinear model parameters
 #'

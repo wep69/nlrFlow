@@ -4,19 +4,52 @@
 #' @param formula Nonlinear formula.
 #' @param data Data frame.
 #' @param start Named starting values.
-#' @param method Robust method supported by `nlrob`.
-#' @param lower Lower bounds.
+#' @param method Robust method supported by `nlrob`: `"M"`, `"MM"`, `"tau"`, `"CM"`, or `"mtl"`.
+#' @param lower Lower bounds. Bounds are named from `names(start)`; scalar bounds are
+#'   replicated to every parameter. The infinite defaults mean "unbounded".
 #' @param upper Upper bounds.
 #' @param ... Additional arguments to `robustbase::nlrob`.
 #' @return An `nlrfit` with engine `robust`.
+#' @details `robustbase::nlrob()` requires fully named bounds whenever bounds are
+#'   supplied, and its global-search methods (`"MM"`, `"tau"`, `"CM"`, `"mtl"`)
+#'   require *finite* bounds. Method `"M"` passes bounds to `stats::nls()`, which
+#'   only honours them under `algorithm = "port"`, so that algorithm is selected
+#'   automatically when finite bounds are given; unbounded `"M"` fits are run
+#'   without bounds at all, which avoids the repeated "bounds ignored" warnings.
 #' @examples
 #' \dontrun{
 #' okra <- nl_data("okra_growth_means"); nl_robust(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))),okra,list(Asym=18,k=.4,xmid=4))
 #' fert <- subset(nl_data("soil_fertility_p"),soil_class=="Loamy"); nl_robust(grain_yield_Mg_ha~Asym-delta*exp(-k*P2O5_kg_ha),fert,list(Asym=8,delta=5,k=.02))
 #' soil <- subset(nl_data("soil_infiltration"),management=="NoTill"); nl_robust(cumulative_infiltration_mm~Vmax*time_min/(Km+time_min),soil,list(Vmax=130,Km=30))
+#' # Global-search methods need finite bounds:
+#' nl_robust(fruit_length~Asym*exp(-exp(-k*(day_after_flowering-xmid))),okra,list(Asym=18,k=.4,xmid=4),
+#'           method="MM",lower=c(Asym=0,k=0,xmid=0),upper=c(Asym=40,k=2,xmid=15))
 #' }
 #' @export
-nl_robust <- function(formula,data,start,method="M",lower=-Inf,upper=Inf,...) {.nl_require("robustbase","robust nonlinear regression");fit<-robustbase::nlrob(formula,data=data,start=start,method=method,lower=lower,upper=upper,...);.nl_wrap(fit,"robust",formula,data,start,metadata=list(lower=lower,upper=upper,method=method))}
+nl_robust <- function(formula,data,start,method="M",lower=-Inf,upper=Inf,...) {
+  .nl_require("robustbase","robust nonlinear regression")
+  method <- match.arg(as.character(method)[1L],c("M","MM","tau","CM","mtl"))
+  if(length(start)&&is.null(names(start)))
+    stop("`start` must be a fully named numeric vector or list so that its elements can be matched to the formula; e.g. start = list(a = 4, k = 0.02).",call.=FALSE)
+  # robustbase::nlrob() errors out when bounds are supplied without names, but the
+  # defaults here arrive unnamed: name (and replicate) them from the start values.
+  bnd <- .nl_prepare_bounds(lower,upper,names(start))
+  bounded <- length(bnd$lower)>0L && all(is.finite(bnd$lower)) && all(is.finite(bnd$upper))
+  if(!bounded && !identical(method,"M"))
+    stop("robustbase::nlrob() method '",method,"' requires finite `lower` and `upper` bounds for its global search; ",
+         "the defaults (-Inf, Inf) are not usable. Supply plausible finite ranges, for example lower = c(",
+         paste(paste0(names(start),"=",0),collapse=", "),") and matching finite upper bounds.",call.=FALSE)
+  args <- list(formula=formula,data=data,method=method,...)
+  if(bounded){args$lower <- bnd$lower;args$upper <- bnd$upper}
+  if(identical(method,"M")){
+    # Only method "M" uses `start`; the other methods warn when it is supplied.
+    args$start <- start
+    # nls() warns once per IRLS iteration that bounds are ignored outside "port".
+    if(bounded && is.null(list(...)$algorithm)) args$algorithm <- "port"
+  }
+  fit <- do.call(robustbase::nlrob,args)
+  .nl_wrap(fit,"robust",formula,data,start,metadata=list(lower=bnd$lower,upper=bnd$upper,method=method))
+}
 #' Fit nonlinear quantile regression
 #'
 #' Fits nonlinear conditional quantiles through `quantreg::nlrq`, useful when nonlinear effects differ across the response distribution.

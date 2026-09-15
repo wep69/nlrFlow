@@ -28,6 +28,10 @@ install.packages(c(
 ))
 ```
 
+The package itself declares `magrittr` and `digest` in `Imports` (the `%>%`
+re-export and the cache-key hashing), and `stats`, `utils` and `graphics` from
+base R; all of these are installed with any standard R distribution.
+
 ## 3. Install scientific optional backends
 
 Install only the capabilities you intend to validate, but a full release check should include:

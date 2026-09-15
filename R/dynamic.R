@@ -9,7 +9,12 @@
 #' @param parms Named parameter vector/list.
 #' @param method ODE solver method.
 #' @param ... Additional arguments to `deSolve::ode`.
-#' @return A data frame-like ODE solution returned by `deSolve`.
+#' @return An `nlr_ode` object. Its `$solution` element is the numeric matrix
+#'   returned by `deSolve::ode` (first column `time`, one column per state),
+#'   together with `$times`, `$states`, `$parms`, `$method`, `$engine`, and
+#'   `$diagnostics`. `print()` shows the solution, `summary()` lists the model
+#'   specification, and `[` and `as.data.frame()` are forwarded to the solution
+#'   matrix, so `sol[, "B"]` and `as.data.frame(sol)` keep working.
 #' @examples
 #' \dontrun{
 #' # Example 1: crop biomass with first-order approach to carrying capacity.
@@ -25,8 +30,35 @@
 #' @export
 nl_ode_solve <- function(state,times,func,parms,method="lsoda",...) {
   .nl_require("deSolve","ODE solving")
-  deSolve::ode(y=state,times=times,func=func,parms=parms,method=method,...)
+  sol <- deSolve::ode(y=state,times=times,func=func,parms=parms,method=method,...)
+  structure(list(solution=sol,times=as.numeric(sol[,1L]),states=names(state),
+                 parms=parms,method=method,engine="deSolve",
+                 diagnostics=summary(sol)),
+            class="nlr_ode")
 }
+
+#' @export
+#' @noRd
+print.nlr_ode <- function(x,...) {
+  cat("<nlr_ode> deSolve method:",x$method,"| states:",paste(x$states,collapse=", "),
+      "| times:",length(x$times),"\n",sep=" ")
+  print(x$solution)
+  invisible(x)
+}
+#' @export
+#' @noRd
+summary.nlr_ode <- function(object,...) {
+  list(method=object$method,engine=object$engine,states=object$states,parms=object$parms,
+       times=range(object$times),n_times=length(object$times),solution=object$solution)
+}
+#' @export
+#' @noRd
+as.data.frame.nlr_ode <- function(x,row.names=NULL,optional=FALSE,...) {
+  as.data.frame(x$solution,row.names=row.names,optional=optional,...)
+}
+#' @export
+#' @noRd
+`[.nlr_ode` <- function(x,i,j,...,drop=TRUE) x$solution[i,j,...,drop=drop]
 
 #' Fit or solve advanced dynamic nonlinear mixed models
 #'

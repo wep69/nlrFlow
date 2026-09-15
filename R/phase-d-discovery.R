@@ -94,6 +94,7 @@ nl_symbolic <- function(data,response,predictors,niterations=200,
 nl_validate_candidate <- function(object,predictor,constraints=list(),grid_n=200,
                                   extrapolation=.1,k=5,template=NULL,tolerance=1e-8) {
   if(!inherits(object,"nlrfit"))stop("object must be an nlrfit.",call.=FALSE)
+  constraints <- .nl_check_constraint_names(constraints)
   grid<-.nl_prediction_grid(object,predictor,grid_n,extrapolation,template);pred<-tryCatch(as.numeric(stats::predict(object$fit,newdata=grid)),error=function(e)rep(NA_real_,nrow(grid)))
   finite_ok<-all(is.finite(pred));checks<-data.frame(check="finite_predictions",pass=finite_ok,violations=sum(!is.finite(pred)),stringsAsFactors=FALSE)
   if(isTRUE(constraints$positive)){v<-sum(pred < -tolerance,na.rm=TRUE);checks<-rbind(checks,data.frame(check="positive_response",pass=v==0,violations=v))}
@@ -163,9 +164,7 @@ nl_discover <- function(data,response,predictor,models=character(),candidate_for
 #' s<-subset(nl_data("soil_p_sorption"),soil_class=="Clayey");d3<-nl_discover(s,"sorbed_P_mg_kg","solution_P_mg_L",c("langmuir","freundlich"),engine="nls");nl_discriminate(d3,"solution_P_mg_L")
 #' @export
 nl_discriminate <- function(fits,predictor,constraints=list(),grid_n=200,extrapolation=.1,k=5) {
-  if(inherits(fits,"nlr_discovery"))fits<-fits$fits
-  if(!is.list(fits)||length(fits)<2L)stop("At least two fitted models are required.",call.=FALSE)
-  if(is.null(names(fits))||any(names(fits)==""))names(fits)<-paste0("model",seq_along(fits));if(!all(vapply(fits,inherits,logical(1),"nlrfit")))stop("All entries must be nlrfit objects.",call.=FALSE)
+  fits <- .nl_as_fit_list(fits, min_length = 2L)
   base<-fits[[1]];grid<-.nl_prediction_grid(base,predictor,grid_n,extrapolation);P<-matrix(NA_real_,nrow(grid),length(fits),dimnames=list(NULL,names(fits)))
   tab<-vector("list",length(fits))
   for(i in seq_along(fits)){z<-fits[[i]];P[,i]<-tryCatch(as.numeric(stats::predict(z$fit,newdata=grid)),error=function(e)NA_real_);val<-tryCatch(nl_validate_candidate(z,predictor,constraints,grid_n,extrapolation,k),error=function(e)NULL);resp<-.nl_response_name(z$formula);ob<-z$data[[resp]];pr<-tryCatch(as.numeric(stats::predict(z$fit,newdata=z$data)),error=function(e)rep(NA_real_,length(ob)));tab[[i]]<-data.frame(model=names(fits)[i],AICc=.nl_aicc(z),RMSE=.nl_rmse(ob,pr),MAE=.nl_mae(ob,pr),CV_RMSE=if(is.null(val))NA else val$metrics$CV_RMSE,valid=if(is.null(val))FALSE else val$pass)}
@@ -199,8 +198,7 @@ nl_discriminate <- function(fits,predictor,constraints=list(),grid_n=200,extrapo
 #' @export
 nl_sequential_discovery <- function(fits,data_template,predictor,candidates,model_weights=NULL,
                                     existing=NULL,min_distance=0,n_points=1,noise_adjust=TRUE) {
-  if(inherits(fits,"nlr_discovery"))fits<-fits$fits
-  if(!is.list(fits)||length(fits)<2L)stop("At least two competing fits are required.",call.=FALSE);if(is.null(names(fits))||any(names(fits)==""))names(fits)<-paste0("model",seq_along(fits))
+  fits <- .nl_as_fit_list(fits, min_length = 2L)
   m<-length(fits);cand<-sort(unique(as.numeric(candidates)));if(n_points<1||n_points>length(cand))stop("Invalid n_points.",call.=FALSE)
   if(is.null(model_weights)){a<-vapply(fits,.nl_aicc,numeric(1));if(all(!is.finite(a)))w<-rep(1/m,m) else {a[!is.finite(a)]<-max(a[is.finite(a)])+20;ww<-exp(-.5*(a-min(a)));w<-ww/sum(ww)}}else{w<-as.numeric(model_weights);if(length(w)!=m||any(w<0)||sum(w)<=0)stop("model_weights must be non-negative and match fits.",call.=FALSE);w<-w/sum(w)};names(w)<-names(fits)
   noise<-vapply(fits,function(z){r<-tryCatch(as.numeric(stats::residuals(z$fit)),error=function(e)numeric());v<-stats::var(r,na.rm=TRUE);if(!is.finite(v)||v<=0)1 else v},numeric(1));noise_scale<-if(noise_adjust)sum(w*noise) else 1

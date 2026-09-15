@@ -158,10 +158,14 @@ nl_capabilities <- function() {
   x <- rbind(x,extra)
   x$available <- vapply(x$package,function(pkg) if(pkg=="internal") TRUE else requireNamespace(pkg,quietly=TRUE),logical(1))
   sc <- x$capability %in% c("neural_ODE","universal_differential_equation","PINN","UDE_symbolic_discovery","dynamic_control")
-  x$available[sc] <- isTRUE(nl_sciml_available(check_packages=FALSE))
+  sciml_ok <- .nl_sciml_capability_cached()
+  x$available[sc] <- sciml_ok
   # Reticulate availability alone does not guarantee that the Python PySR environment is configured.
   x$availability_note <- ifelse(x$capability=="symbolic_regression",
     "TRUE means reticulate is installed; nl_symbolic() also checks for Python package pysr at runtime.","")
+  x$availability_note[sc & !sciml_ok] <-
+    "Julia found but required Julia packages are missing; run nl_sciml_setup(install = TRUE)."
+  x$availability_note[sc & sciml_ok] <- ""
   x
 }
 #' Load a packaged teaching dataset

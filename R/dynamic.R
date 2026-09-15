@@ -52,7 +52,14 @@ nl_ode_solve <- function(state,times,func,parms,method="lsoda",...) {
 #' @export
 nl_dynamic <- function(model,data,est="saem",control=list(),...) {
   .nl_require("nlmixr2","dynamic nonlinear mixed-effects models")
-  f <- getExportedValue("nlmixr2", "nlmixr2")
+  f <- NULL
+  for (pk in c("nlmixr2est", "nlmixr2")) {
+    if (requireNamespace(pk, quietly = TRUE) && "nlmixr2" %in% getNamespaceExports(pk)) {
+      f <- getExportedValue(pk, "nlmixr2")
+      break
+    }
+  }
+  if (is.null(f)) stop("Could not find nlmixr2() in nlmixr2est or nlmixr2. Install nlmixr2est or update the nlmixr2 stack.", call. = FALSE)
   fit <- f(model,data,est=est,control=control,...)
   .nl_wrap(fit,"nlmixr2",stats::as.formula("response ~ time"),data,start=NULL,metadata=list(est=est,control=control))
 }

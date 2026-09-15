@@ -73,7 +73,12 @@ nl_sciml_available <- function(julia = NULL, check_packages = FALSE) {
     status <- suppressWarnings(system2(exe, c(paste0("--project=", shQuote(.nl_sciml_project())), "-e", shQuote(expr)), stdout = FALSE, stderr = FALSE))
     packages_ok <- identical(as.integer(status), 0L); ok <- ok && packages_ok
   }
-  structure(ok, julia = exe, packages_ok = packages_ok)
+  structure(ok, julia = exe, packages_ok = packages_ok,
+            note = if (is.na(packages_ok))
+              "Julia executable found; Julia packages not checked (use check_packages = TRUE)."
+            else if (!isTRUE(packages_ok))
+              "Julia found but required Julia packages are missing; run nl_sciml_setup(install = TRUE)."
+            else "")
 }
 
 #' Inspect the SciML backend map
@@ -414,6 +419,7 @@ nl_sciml_diagnose <- function(object,thresholds=c(rmse_ratio=.20,physics_loss=.0
 #' @export
 nl_dynamic_design <- function(object,candidates,n_points=3,criterion=c("curvature","discrimination","uncertainty"),min_distance=0,dimension=c("time","depth")) {
   dimension<-match.arg(dimension);criterion<-match.arg(criterion);cand<-sort(unique(as.numeric(candidates)))
+  if(inherits(object,"nlr_sciml_spec"))stop("Dynamic design requires an executed fit, not dry_run=TRUE.",call.=FALSE)
   if(length(cand)<1L||any(!is.finite(cand)))stop("candidates must contain finite times.",call.=FALSE)
   if(!is.numeric(n_points)||length(n_points)!=1L||n_points<1)stop("n_points must be >= 1.",call.=FALSE)
   if(!is.numeric(min_distance)||length(min_distance)!=1L||!is.finite(min_distance)||min_distance<0)stop("min_distance must be a finite nonnegative scalar.",call.=FALSE)

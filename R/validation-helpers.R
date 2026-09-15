@@ -72,6 +72,47 @@
   response
 }
 
+# Accepted keys for the `constraints` argument of nl_validate_candidate()
+.NL_CONSTRAINT_KEYS <- c("positive", "monotonic", "response_range", "parameter_bounds")
+
+# Deprecated synonyms mapped to their canonical key
+.NL_CONSTRAINT_SYNONYMS <- c(nonnegative = "positive", monotone = "monotonic")
+
+#' Validate constraint key names
+#'
+#' Rejects unknown keys in `constraints` instead of silently ignoring them.
+#' Deprecated synonyms (`nonnegative`, `monotone`) are accepted with a warning
+#' and renamed to their canonical form, so previously written code keeps
+#' running while the caller is informed.
+#'
+#' @param constraints Named list of scientific constraints.
+#' @return The constraints list, with synonyms renamed to canonical keys.
+#' @keywords internal
+.nl_check_constraint_names <- function(constraints) {
+  if (!length(constraints)) return(constraints)
+  nm <- names(constraints)
+  if (is.null(nm) || any(!nzchar(nm)))
+    stop("Every element of constraints must be named. Accepted: ",
+         paste(.NL_CONSTRAINT_KEYS, collapse = ", "), ".", call. = FALSE)
+  synonyms <- intersect(nm, names(.NL_CONSTRAINT_SYNONYMS))
+  if (length(synonyms)) {
+    for (s in synonyms) {
+      canonical <- .NL_CONSTRAINT_SYNONYMS[[s]]
+      warning("constraints$", s, " is deprecated; use constraints$", canonical,
+              " instead.", call. = FALSE)
+      if (!canonical %in% nm) constraints[[canonical]] <- constraints[[s]]
+    }
+    constraints[synonyms] <- NULL
+    nm <- names(constraints)
+  }
+  unknown <- setdiff(nm, .NL_CONSTRAINT_KEYS)
+  if (length(unknown))
+    stop("Unknown constraint(s): ", paste(unknown, collapse = ", "),
+         ". Accepted: ", paste(.NL_CONSTRAINT_KEYS, collapse = ", "), ".",
+         call. = FALSE)
+  constraints
+}
+
 #' Validate group column
 #' @param object An nlrfit
 #' @param group Group name or NULL
@@ -82,6 +123,35 @@
     .nl_validate_column(object$data, group, "any", "group")
   }
   group
+}
+
+#' Normalize a collection of fits to a named list of nlrfit objects
+#'
+#' Accepts an `nlrfit_list` (from `nl_fit_many()`), an `nlr_discovery` result,
+#' a single `nlrfit`, or a plain list of `nlrfit` objects, and fails loudly on
+#' anything else. Without this, passing the wrong container silently produces
+#' all-NA scores instead of an error.
+#'
+#' @param fits Fits object in any accepted form.
+#' @param min_length Minimum number of fits required.
+#' @return A named list of `nlrfit` objects.
+#' @keywords internal
+.nl_as_fit_list <- function(fits, min_length = 2L) {
+  if (inherits(fits, "nlrfit_list")) fits <- fits$fits
+  else if (inherits(fits, "nlr_discovery")) fits <- fits$fits
+  else if (inherits(fits, "nlrfit")) fits <- list(fits)
+  if (!is.list(fits) || !length(fits))
+    stop("fits must be an nlrfit_list, an nlr_discovery result, a list of nlrfit objects, or a single nlrfit.",
+         call. = FALSE)
+  ok <- vapply(fits, inherits, logical(1), "nlrfit")
+  if (!all(ok))
+    stop("All entries must be nlrfit objects; element(s) ",
+         paste(which(!ok), collapse = ", "), " are not.", call. = FALSE)
+  if (length(fits) < min_length)
+    stop("At least ", min_length, " competing fits are required.", call. = FALSE)
+  if (is.null(names(fits)) || any(!nzchar(names(fits))))
+    names(fits) <- paste0("model", seq_along(fits))
+  fits
 }
 
 #' Normalize lower/upper bounds to match parameter names
@@ -95,4 +165,19 @@
   if (length(upper) == 1L) upper <- rep(upper, length(pnames))
   names(lower) <- names(upper) <- pnames
   list(lower = lower, upper = upper)
+}
+
+# Session-level cache for the SciML capability probe. Checking Julia packages
+# costs a few seconds, so it is done once per session instead of on every call.
+.nl_sciml_cap_cache <- new.env(parent = emptyenv())
+
+#' Cached SciML availability probe including Julia packages
+#' @return Logical: TRUE only when Julia and the required Julia packages load.
+#' @keywords internal
+.nl_sciml_capability_cached <- function() {
+  if (!is.null(.nl_sciml_cap_cache$value)) return(.nl_sciml_cap_cache$value)
+  ok <- tryCatch(isTRUE(as.logical(nl_sciml_available(check_packages = TRUE))),
+                 error = function(e) FALSE)
+  .nl_sciml_cap_cache$value <- ok
+  ok
 }

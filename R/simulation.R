@@ -19,6 +19,7 @@
 #' nl_simulate("gompertz",rep(1:10,2),c(Asym=18,k=.4,xmid=4),group=rep(c("Control","Stress"),each=10),group_effects=list(Stress=c(Asym=-3,k=-.05)),seed=4)
 #' @export
 nl_simulate <- function(model,x,parameters,sigma=1,distribution=c("gaussian","student"),hetero_power=0,group=NULL,group_effects=NULL,seed=20260817) {
+  .nl_with_seed(seed, {
   distribution<-match.arg(distribution); form<-.nl_model_formula(model,"y","x"); dat<-data.frame(x=x)
   if(!is.null(group) && length(group)!=length(x)) stop("group must have the same length as x.",call.=FALSE)
   if(is.null(group)) mu <- .nl_rhs_eval(form,dat,parameters) else {
@@ -33,6 +34,7 @@ nl_simulate <- function(model,x,parameters,sigma=1,distribution=c("gaussian","st
       mu[idx] <- .nl_rhs_eval(form,dat[idx,,drop=FALSE],par)
     }
   }
-  sc<-sigma*pmax(abs(mu),1)^hetero_power;set.seed(seed);e<-if(distribution=="gaussian")stats::rnorm(length(x),0,sc) else stats::rt(length(x),df=4)*sc/sqrt(2)
+  sc<-sigma*pmax(abs(mu),1)^hetero_power;e<-if(distribution=="gaussian")stats::rnorm(length(x),0,sc) else stats::rt(length(x),df=4)*sc/sqrt(2)
   out<-data.frame(x=x,truth=mu,y=mu+e);if(!is.null(group))out$group<-group;out
+  })
 }

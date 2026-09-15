@@ -13,7 +13,8 @@
 #' f <- nl_fit(data=subset(nl_data("soil_infiltration"),management=="NoTill"),model="michaelis_menten",response="cumulative_infiltration_mm",predictor="time_min",engine="nls"); nl_boot(f,R=20,type="parametric",seed=3)
 #' @export
 nl_boot <- function(object,R=999,type=c("case","residual","parametric","cluster","wild"),cluster=NULL,seed=20260817) {
-  stopifnot(inherits(object,"nlrfit")); if(identical(object$engine,"brms")) stop("Use posterior draws rather than frequentist bootstrap for a brms-backed fit.",call.=FALSE); type<-match.arg(type); dat<-object$data; resp<-.nl_response_name(object$formula); n<-nrow(dat); cf<-.nl_coef(object); out<-matrix(NA_real_,R,length(cf),dimnames=list(NULL,names(cf))); ok<-logical(R); set.seed(seed)
+  .nl_with_seed(seed, {
+  stopifnot(inherits(object,"nlrfit")); if(identical(object$engine,"brms")) stop("Use posterior draws rather than frequentist bootstrap for a brms-backed fit.",call.=FALSE); type<-match.arg(type); dat<-object$data; resp<-.nl_response_name(object$formula); n<-nrow(dat); cf<-.nl_coef(object); out<-matrix(NA_real_,R,length(cf),dimnames=list(NULL,names(cf))); ok<-logical(R)
   fitv<-as.numeric(fitted(object)); res<-as.numeric(residuals(object)); sig<-sqrt(sum(res^2)/max(1,n-length(cf)))
   for(b in seq_len(R)){
     d<-switch(type,
@@ -25,6 +26,7 @@ nl_boot <- function(object,R=999,type=c("case","residual","parametric","cluster"
     z<-try(.nl_refit(object,d),silent=TRUE); if(!inherits(z,"try-error")){cc<-try(coef(z),silent=TRUE);if(!inherits(cc,"try-error")){out[b,names(cc)]<-cc;ok[b]<-TRUE}}
   }
   structure(list(coefficients=out,converged=ok,R=R,type=type,seed=seed,object=object,failure_rate=mean(!ok)),class="nlrboot")
+  })
 }
 #' Predict from nonlinear models with uncertainty
 #'
@@ -44,6 +46,7 @@ nl_boot <- function(object,R=999,type=c("case","residual","parametric","cluster"
 #' f <- nl_fit(data=subset(nl_data("soil_infiltration"),management=="NoTill"),model="michaelis_menten",response="cumulative_infiltration_mm",predictor="time_min",engine="nls"); nl_predict(f,interval="confidence",nsim=100)
 #' @export
 nl_predict <- function(object,newdata=NULL,interval=c("none","confidence","prediction"),level=.95,nsim=1000,boot=NULL,seed=20260817,...) {
+  .nl_with_seed(seed, {
   interval<-match.arg(interval); dat<-newdata %||% object$data; alpha<-1-level
   if(inherits(object,"nlrfit") && identical(object$engine,"brms")) {
     .nl_require("brms","Bayesian posterior prediction")
@@ -60,9 +63,10 @@ nl_predict <- function(object,newdata=NULL,interval=c("none","confidence","predi
   if(interval=="none") return(ans)
   draws<-NULL
   if(!is.null(boot)) { B<-boot$coefficients[boot$converged,,drop=FALSE]; draws<-vapply(seq_len(nrow(B)),function(i).nl_rhs_eval(object$formula,dat,B[i,]),numeric(nrow(dat))) }
-  else {V<-.nl_extract_vcov(object); if(is.null(V)) stop("vcov unavailable; provide boot=.",call.=FALSE); set.seed(seed); P<-.nl_mvrnorm(nsim,.nl_coef(object),V); draws<-vapply(seq_len(nsim),function(i).nl_rhs_eval(object$formula,dat,P[i,]),numeric(nrow(dat)))}
-  if(interval=="prediction"){res<-as.numeric(residuals(object));sig<-sqrt(mean(res^2));set.seed(seed+1);draws<-draws+matrix(stats::rnorm(length(draws),0,sig),nrow(draws),ncol(draws))}
+  else {V<-.nl_extract_vcov(object); if(is.null(V)) stop("vcov unavailable; provide boot=.",call.=FALSE); P<-.nl_mvrnorm(nsim,.nl_coef(object),V); draws<-vapply(seq_len(nsim),function(i).nl_rhs_eval(object$formula,dat,P[i,]),numeric(nrow(dat)))}
+  if(interval=="prediction"){res<-as.numeric(residuals(object));sig<-sqrt(mean(res^2));draws<-draws+matrix(stats::rnorm(length(draws),0,sig),nrow(draws),ncol(draws))}
   ans$.lower<-apply(draws,1,stats::quantile,probs=alpha/2,na.rm=TRUE);ans$.upper<-apply(draws,1,stats::quantile,probs=1-alpha/2,na.rm=TRUE);ans
+  })
 }
 #' Diagnose a nonlinear fit
 #'

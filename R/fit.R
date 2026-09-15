@@ -91,6 +91,7 @@ nl_start <- function(data, response, predictor, model) {
 #' }
 #' @export
 nl_multistart <- function(formula,data,start_lower,start_upper,iter=250,lhstype=c("shotgun","random","improved","maximin","genetic"),convergence_count=100,seed=20260817,...) {
+  .nl_with_seed(seed, {
   .nl_require("nls.multstart","multistart nonlinear fitting")
   lhstype <- match.arg(lhstype)
   if(is.null(names(start_lower)) || is.null(names(start_upper)) || !identical(names(start_lower),names(start_upper))) stop("start_lower and start_upper must be named vectors with identical names.",call.=FALSE)
@@ -101,6 +102,7 @@ nl_multistart <- function(formula,data,start_lower,start_upper,iter=250,lhstype=
   set.seed(seed)
   fit <- do.call(nls.multstart::nls_multstart,c(args,list(...)))
   .nl_wrap(fit,"multistart",formula,data,start=(start_lower+start_upper)/2,metadata=list(start_lower=start_lower,start_upper=start_upper,iter=iter,lhstype=lhstype,convergence_count=convergence_count,seed=seed))
+  })
 }
 #' Global genetic-algorithm search for nonlinear starting values
 #'
@@ -169,7 +171,13 @@ nl_global_start <- function(formula,data,lower,upper,pop_size=100,maxiter=1000,r
 nl_fit <- function(formula = NULL, data, start = NULL, engine = c("nlsLM","nls","multistart","gnls","robust","quantile"),
                    model = NULL, response = NULL, predictor = NULL, lower = -Inf, upper = Inf,
                    weights = NULL, correlation = NULL, params = NULL, tau = 0.5, ...) {
-  engine <- match.arg(engine)
+  builtin <- eval(formals(nl_fit)$engine)
+  engine <- if (missing(engine)) builtin[1] else as.character(engine)[1]
+  registered <- ls(.nl_engine_registry, all.names = FALSE)
+  if (!engine %in% c(builtin, registered))
+    stop("Unknown engine '", engine, "'. Built-in: ", paste(builtin, collapse = ", "),
+         if (length(registered)) paste0("; registered: ", paste(registered, collapse = ", ")) else "",
+         ".", call. = FALSE)
   if (is.null(formula)) {
     if (is.null(model)||is.null(response)||is.null(predictor)) stop("Supply formula or model + response + predictor.",call.=FALSE)
     formula <- .nl_model_formula(model,response,predictor)
@@ -180,6 +188,14 @@ nl_fit <- function(formula = NULL, data, start = NULL, engine = c("nlsLM","nls",
     bounds <- .nl_prepare_bounds(lower, upper, names(start))
     lower <- bounds$lower
     upper <- bounds$upper
+  }
+  if (engine %in% registered) {
+    eng <- .nl_get_engine(engine)
+    args <- list(formula=formula, data=data, start=start, lower=lower, upper=upper)
+    if (!is.null(weights)) args$weights <- weights
+    args <- c(args, list(...))
+    fit <- do.call(eng$fit, args)
+    return(.nl_wrap(fit,engine,formula,data,start,model,match.call(),list(lower=lower,upper=upper,params=params,tau=tau)))
   }
   fit <- switch(engine,
     nls = {
@@ -204,7 +220,16 @@ nl_fit <- function(formula = NULL, data, start = NULL, engine = c("nlsLM","nls",
       span <- pmax(abs(unlist(start))*0.75, 1)
       return(nl_multistart(formula,data,start_lower=unlist(start)-span,start_upper=unlist(start)+span,iter=250,lhstype="maximin",...))
     },
-    gnls = { .nl_require("nlme","generalized nonlinear least squares"); nlme::gnls(formula,data=data,params=params,start=unlist(start),weights=weights,correlation=correlation,...) },
+    gnls = {
+      .nl_require("nlme","generalized nonlinear least squares")
+      args <- list(model=formula, data=data, start=unlist(start))
+      if (is.null(params)) params <- lapply(names(start), function(p) stats::as.formula(paste(p, "~ 1")))
+      args$params <- params
+      if (!is.null(weights)) args$weights <- weights
+      if (!is.null(correlation)) args$correlation <- correlation
+      args <- c(args, list(...))
+      do.call(nlme::gnls, args)
+    },
     robust = return(nl_robust(formula,data,start=start,lower=lower,upper=upper,...)),
     quantile = return(nl_quantile(formula,data,start=start,tau=tau,...))
   )
